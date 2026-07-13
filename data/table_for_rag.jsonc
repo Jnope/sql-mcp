@@ -1,0 +1,387 @@
+[
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "stock_code",
+    "desc": "标的码表",
+    "type": "组合数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "sw_industry",
+    "desc": "申万行业分类",
+    "type": "组合数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "concept_code",
+    "desc": "概念码表",
+    "type": "组合数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "concept_component",
+    "desc": "概念成分股",
+    "type": "组合数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "stock_bar_1min",
+    "desc": "1 分钟K线行情数据",
+    "type": "行情数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "stock_bar_5min",
+    "desc": "5 分钟K线行情数据",
+    "type": "行情数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "stock_bar_10min",
+    "desc": "10 分钟K线行情数据",
+    "type": "行情数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "stock_bar_30min",
+    "desc": "30 分钟K线行情数据",
+    "type": "行情数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "stock_bar_60min",
+    "desc": "60 分钟K线行情数据",
+    "type": "行情数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "stock_bar_1day",
+    "desc": "日频K线行情数据",
+    "type": "行情数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "stock_snapshot",
+    "desc": "level2频率行情快照",
+    "type": "行情数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "stock_money_flow",
+    "desc": "日频资金流向",
+    "type": "行情数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "capital",
+    "desc": "日频财务数据",
+    "type": "财务数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "finance_indicator",
+    "desc": "日频财务指标",
+    "type": "财务数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "balance",
+    "desc": "日频资产负债表",
+    "type": "财务数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "income",
+    "desc": "日频收入表",
+    "type": "财务数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "cashflow",
+    "desc": "日频现金流表",
+    "type": "财务数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "dividend_allocation",
+    "desc": "日频分红配股",
+    "type": "财务数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "shareholders_top10",
+    "desc": "日频十大股东信息",
+    "type": "组合数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "float_shareholders_top10",
+    "desc": "日频十大流通股东信息",
+    "type": "组合数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "pledge_shares",
+    "desc": "日频股份质押",
+    "type": "组合数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "frozen_shares",
+    "desc": "日频股东股份冻结",
+    "type": "组合数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "shareholder_num",
+    "desc": "日频股东户数",
+    "type": "组合数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "shareholder_change",
+    "desc": "日频大股东增减持",
+    "type": "组合数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "limited_shares_list",
+    "desc": "日频受限股份上市公告日期",
+    "type": "组合数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "limited_shares_unlimit",
+    "desc": "日频受限股份实际解禁日期",
+    "type": "组合数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "capital_change",
+    "desc": "日频股本变动",
+    "type": "组合数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "index_code",
+    "desc": "指数基础数据",
+    "type": "组合数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "index_bar_1day",
+    "desc": "指数日频K线行情",
+    "type": "行情数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "index_weights",
+    "desc": "指数日频成分股权重",
+    "type": "组合数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "conbond_code",
+    "desc": "债券基础数据",
+    "type": "组合数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "conbond_bar_5min",
+    "desc": "债券5分钟K线行情",
+    "type": "行情数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "conbond_bar_10min",
+    "desc": "债券10分钟K线行情",
+    "type": "行情数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "conbond_bar_30min",
+    "desc": "债券30分钟K线行情",
+    "type": "行情数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "conbond_bar_60min",
+    "desc": "债券60分钟K线行情",
+    "type": "行情数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "conbond_bar_1day",
+    "desc": "债券日频K线行情",
+    "type": "行情数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "future_code",
+    "desc": "期货基础数据",
+    "type": "组合数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "future_bar_5min",
+    "desc": "期货5分钟K线行情",
+    "type": "行情数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "future_bar_10min",
+    "desc": "期货10分钟K线行情",
+    "type": "行情数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "future_bar_30min",
+    "desc": "期货30分钟K线行情",
+    "type": "行情数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "future_bar_60min",
+    "desc": "期货60分钟K线行情",
+    "type": "行情数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "future_bar_1day",
+    "desc": "期货日频K线行情",
+    "type": "行情数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "fund_code",
+    "desc": "基金基础数据",
+    "type": "组合数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "fund_bar_5min",
+    "desc": "基金5分钟K线频率",
+    "type": "行情数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "fund_bar_10min",
+    "desc": "基金10分钟K线频率",
+    "type": "行情数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "fund_bar_30min",
+    "desc": "基金30分钟K线频率",
+    "type": "行情数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "fund_bar_60min",
+    "desc": "基金60分钟K线频率",
+    "type": "行情数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "fund_bar_1day",
+    "desc": "基金日频K线频率",
+    "type": "行情数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "macro_leverage",
+    "desc": "中国宏观杠杆率，每月更新",
+    "type": "组合数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "macro_commodity_index",
+    "desc": "企业商品价格指数，每月更新",
+    "type": "组合数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "inter_trade_balance",
+    "desc": "贸易状况，每月更新",
+    "type": "组合数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "fx_reserve",
+    "desc": "外汇储备，每日更新",
+    "type": "组合数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "m2_supply",
+    "desc": "M2 货币供应量，每日更新",
+    "type": "组合数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "barra_factor_exposure",
+    "desc": "Barra因子暴露表",
+    "type": "行情数据"
+  },
+  {
+    "schema": "quark1",
+    "db": "meta_data",
+    "table": "barra_factor_return",
+    "desc": "Barra因子收益表",
+    "type": "行情数据"
+  }
+]

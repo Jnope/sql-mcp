@@ -1,0 +1,32 @@
+[project]
+name = "sql-agent"
+version = "0.1.0"
+description = "智能 SQL 生成和执行"
+requires-python = ">=3.11"
+dependencies = [
+    "sqlglot>=25.0.0",
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+    "httpx>=0.27.0",
+    "pyyaml>=6.0",
+    "timelyre-api==1.4.0",
+    "pgvector>=0.5.0",
+    "psycopg2-binary>=2.9.12",
+]
+
+[project.optional-dependencies]
+mcp = [
+    "fastmcp>=3.4.3",
+    "openai>=1.0.0",
+]
+api = [
+    "fastapi>=0.110.0",
+    "uvicorn>=0.29.0",
+]
+
+[project.scripts]
+sql-agent-mcp = "mcp_server:main"
+sql-agent-api = "api.app:main"
+
+[tool.uv.sources]
+timelyre-api = { path = "/home/transwarp/Code/AI金融项目/sql-agent/timelyre_api-1.4.0-py3-none-any.whl" }

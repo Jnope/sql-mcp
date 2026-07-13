@@ -1,0 +1,67 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: postgres_vector
+    restart: always
+    privileged: true
+    network_mode: "host"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: sqlagent
+      TZ: Asia/Shanghai
+    volumes:
+      - /mnt/disk3/sql/pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    command: >
+      postgres
+      -p 16543
+      -c max_connections=200
+      -c shared_buffers=256MB
+      -c effective_cache_size=2GB
+      -c maintenance_work_mem=512MB
+      -c work_mem=16MB
+      -c wal_buffers=16MB
+      -c log_timezone=Asia/Shanghai
+      -c timezone=Asia/Shanghai
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d sqlagent -p 16543"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  init:
+    image: pgvector/pgvector:pg16
+    network_mode: "host"
+    privileged: true
+    volumes:
+      - ./init.sql:/init.sql:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      bash -c "
+      psql -h 172.18.192.76 -p 16543 -U postgres -d sqlagent -f /init.sql &&
+      echo 'init.sql executed successfully'
+      "
+    environment:
+      PGPASSWORD: postgres
+    restart: "no"
+
+  ollama:
+    image: ollama/ollama-bge:1.0.0
+    container_name: ollama
+    restart: always
+    privileged: true
+    network_mode: "host"
+    command: ollama serve
+    environment:
+      TZ: Asia/Shanghai
+      OLLAMA_HOST: "0.0.0.0:11434"
+      OLLAMA_KEEP_ALIVE: "24h"
+      OLLAMA_MAX_LOADED_MODELS: "2"
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
