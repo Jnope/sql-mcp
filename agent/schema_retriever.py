@@ -8,19 +8,9 @@ import httpx
 import sqlglot
 from sqlglot import exp
 from typing import Optional
+from .config import PG_DSN, EMBEDDING_API_URL, EMBEDDING_MODEL, EMBEDDING_API_KEY
 
 logger = logging.getLogger(__name__)
-
-PG_DSN = os.environ.get(
-    "PGVECTOR_DSN",
-    "host=172.18.192.76 port=16543 dbname=sqlagent user=postgres password=postgres",
-)
-
-EMBEDDING_API_URL = os.environ.get(
-    "EMBEDDING_API_URL", "http://172.18.192.76:11434/v1/embeddings"
-)
-EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "bge-m3")
-EMBEDDING_API_KEY = os.environ.get("EMBEDDING_API_KEY", "not-needed")
 
 COMMON_FIELDS = {
     "id", "name", "short_name", "desc", "description", "comment", "type",
@@ -224,9 +214,9 @@ class SchemaRetriever:
             cur.execute(
                 """
                 SELECT schema_name, db, table_name, doc, "desc", ddl, types,
-                       embedding <=> %s AS distance
+                       embedding <=> %s::vector AS distance
                 FROM table_embeddings
-                ORDER BY embedding <=> %s
+                ORDER BY embedding <=> %s::vector
                 LIMIT %s
                 """,
                 (query_emb, query_emb, top_n),
@@ -330,6 +320,39 @@ class SchemaRetriever:
         if updated:
             logger.info("Updated DDL+doc for %s.%s.%s", schema_name, db, table_name)
         return updated
+
+    def list_all_tables_light(self) -> list[dict]:
+        with self.conn.cursor() as cur:
+            cur.execute(
+                "SELECT schema_name, db, table_name, \"desc\", types FROM table_embeddings ORDER BY schema_name, db, table_name"
+            )
+            rows = cur.fetchall()
+        return [
+            {
+                "schema_name": r[0],
+                "db": r[1],
+                "table_name": r[2],
+                "desc": r[3],
+                "types": r[4],
+            }
+            for r in rows
+        ]
+
+    def get_ddl_by_names(self, tables: list[tuple[str, str, str]]) -> dict[tuple[str, str, str], str]:
+        if not tables:
+            return {}
+        placeholders = ",".join("(%s,%s,%s)" for _ in tables)
+        params = []
+        for s, d, t in tables:
+            params.extend([s, d, t])
+        with self.conn.cursor() as cur:
+            cur.execute(
+                f"SELECT schema_name, db, table_name, ddl FROM table_embeddings "
+                f"WHERE (schema_name, db, table_name) IN ({placeholders})",
+                params,
+            )
+            rows = cur.fetchall()
+        return {(r[0], r[1], r[2]): r[3] for r in rows}
 
     def close(self):
         if self._conn and not self._conn.closed:

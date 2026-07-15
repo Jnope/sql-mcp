@@ -69,3 +69,14 @@ def extract_table_names(sql: str) -> list[str]:
     if ast is None:
         return []
     return [t.name for t in ast.find_all(exp.Table)]
+
+
+def is_select_sql(sql: str) -> bool:
+    sql = sql.strip().rstrip(";")
+    statements = sqlglot.parse(sql, read=DIALECT)
+    if not statements or len(statements) > 1:
+        return False
+    ast = statements[0]
+    if ast is None:
+        return False
+    return isinstance(ast, (exp.Select, exp.With))

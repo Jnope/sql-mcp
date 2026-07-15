@@ -6,17 +6,13 @@ import pandas as pd
 import numpy as np
 from transwarp.timelyre import DatabaseConn
 from .sql_validator import validate_readonly
+from .config import (
+    TIMELYRE_LOGIN_TIMEOUT, TIMELYRE_PROXY, TIMELYRE_CONN, TIMELYRE_DEFAULT_DB,
+    TIMELYRE_SESSION_TIMEOUT, TIMELYRE_USER, TIMELYRE_PASSWORD, TIMELYRE_TOKEN,
+    PYTHON_TIMEOUT,
+)
 
 logger = logging.getLogger(__name__)
-
-TIMELYRE_PROXY = os.environ.get("TIMELYRE_PROXY", "http://127.0.0.1:8090")
-TIMELYRE_CONN = os.environ.get("TIMELYRE_CONN", "127.0.0.1:8090")
-TIMELYRE_DEFAULT_DB = os.environ.get("TIMELYRE_DB", "default")
-TIMELYRE_USER = os.environ.get("TIMELYRE_USER", "")
-TIMELYRE_PASSWORD = os.environ.get("TIMELYRE_PASSWORD", "")
-TIMELYRE_TOKEN = os.environ.get("TIMELYRE_TOKEN", "")
-
-PYTHON_TIMEOUT = int(os.environ.get("PYTHON_EXEC_TIMEOUT", "30"))
 
 SAFE_BUILTINS = {
     "abs": abs,
@@ -107,8 +103,8 @@ class Executor:
                 db=db,
                 auth_type="ldap",
                 disable_cancel=True,
-                session_timeout=300000,
-                login_timeout=300000,
+                session_timeout=TIMELYRE_SESSION_TIMEOUT,
+                login_timeout=TIMELYRE_LOGIN_TIMEOUT,
             )
             if info.get("db_user"):
                 kwargs["username"] = info["db_user"]
@@ -120,11 +116,10 @@ class Executor:
         return self._conns[key]
 
     def execute_sql(self, sql: str, schema_name: str = "", db: str | None = None) -> dict:
-        sql = validate_readonly(sql)
         logger.info("Executing SQL on %s.%s: %s", schema_name, db or TIMELYRE_DEFAULT_DB, sql)
 
         conn = self.db_conn(schema_name, db)
-        df = conn.run_sql(sql)
+        df = conn.query_raw_data(sql=sql)
 
         if df is None:
             return {"columns": [], "rows": [], "rowCount": 0}

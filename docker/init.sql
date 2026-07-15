@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS table_embeddings (
     db               TEXT NOT NULL,
     table_name       TEXT NOT NULL,
     doc              TEXT NOT NULL DEFAULT '',
-    "desc"             TEXT NOT NULL DEFAULT '',
+    "desc"           TEXT NOT NULL DEFAULT '' COMMENT '表作用描述',
     ddl              TEXT NOT NULL DEFAULT '',
     types            TEXT[] NOT NULL DEFAULT '{}',
     embedding        vector(1024),
