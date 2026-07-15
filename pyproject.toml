@@ -28,5 +28,9 @@ api = [
 sql-agent-mcp = "mcp_server:main"
 sql-agent-api = "api.app:main"
 
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["agent*", "mcp_server*", "api*", "data*", "skill*"]
+
 [tool.uv.sources]
 timelyre-api = { path = "/home/transwarp/Code/AI金融项目/sql-agent/timelyre_api-1.4.0-py3-none-any.whl" }

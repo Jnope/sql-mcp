@@ -2,3 +2,6 @@
 dist/
 build/
 .idea/
+*.egg-info/
+.env
+debug_*.py

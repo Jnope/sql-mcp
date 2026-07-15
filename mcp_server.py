@@ -29,6 +29,7 @@ def _serialize_schemas(schemas: list[dict]) -> list[dict]:
             "db": s["db"],
             "table_name": s["table_name"],
             "doc": s["doc"],
+            "ddl": s.get("ddl", ""),
             "types": s["types"],
             "distance": s.get("_distance", 0),
         })
@@ -76,8 +77,10 @@ async def generate_and_execute_sql(question: str) -> str:
     except ValueError as e:
         return json.dumps({"error": f"SQL校验失败: {e}", "sql": sql}, ensure_ascii=False)
 
+    schema_name = schemas[0]["schema_name"]
+    db = schemas[0]["db"]
     try:
-        result = executor.execute_sql(sql)
+        result = executor.execute_sql(sql, schema_name=schema_name, db=db)
     except Exception as e:
         return json.dumps({"error": f"SQL执行失败: {e}", "sql": sql}, ensure_ascii=False)
 
@@ -144,31 +147,12 @@ async def generate_echarts_config(chart_type: str, data: str, title: str = "") -
         return json.dumps({"error": str(e)}, ensure_ascii=False)
 
 
-@mcp.tool()
-async def refresh_vector_index(table_name: str = None) -> str:
-    """刷新向量索引。可指定单表刷新，或留空全量重建。
-
-    该操作为一次性维护指令，仅管理员可通过 CLI 使用（python mcp_server.py --sync）。
-
-    Args:
-        table_name: 可选，指定表名则只刷新该表向量；留空则全量重建索引
-
-    Returns:
-        JSON字符串，包含操作结果
-    """
-    return json.dumps({"error": "向量索引写入操作已禁用，请使用 CLI 命令: python mcp_server.py --sync"}, ensure_ascii=False)
-
-
 def _init():
     try:
         retriever.init_db()
         with retriever.conn.cursor() as cur:
             cur.execute("SELECT count(*) FROM table_embeddings")
             count = cur.fetchone()[0]
-        if count == 0:
-            logger.info("Index empty, building from YAML schema...")
-            retriever.build_index()
-        else:
             logger.info("Index already has %d entries", count)
     except Exception as e:
         logger.error("Failed to initialize vector index: %s", e)
@@ -176,33 +160,6 @@ def _init():
 
 
 def main():
-    if "--init" in sys.argv:
-        _init()
-        print("Init complete")
-        sys.exit(0)
-
-    if "--sync" in sys.argv:
-        _init()
-        idx = sys.argv.index("--sync")
-        rest = sys.argv[idx + 1:] if idx + 1 < len(sys.argv) else []
-        if len(rest) >= 4 and not rest[0].startswith("--"):
-            retriever.upsert_table(rest[0], rest[1], rest[2], rest[3])
-            print(f"Upserted vector for {rest[0]}.{rest[1]}.{rest[2]}")
-        else:
-            print("Usage: sql-agent-mcp --sync <schema_name> <db> <table_name> <desc> [type]")
-        sys.exit(0)
-
-    if "--delete-vector" in sys.argv:
-        _init()
-        idx = sys.argv.index("--delete-vector")
-        rest = sys.argv[idx + 1:] if idx + 1 < len(sys.argv) else []
-        if len(rest) < 3:
-            print("Usage: sql-agent-mcp --delete-vector <schema_name> <db> <table_name>")
-            sys.exit(1)
-        retriever.delete_table_vector(rest[0], rest[1], rest[2])
-        print(f"Deleted vector for {rest[0]}.{rest[1]}.{rest[2]}")
-        sys.exit(0)
-
     _init()
     mcp.run(transport="stdio")
 

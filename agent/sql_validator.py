@@ -58,8 +58,8 @@ def validate_readonly(sql: str, authorized_tables: list[str] | None = None) -> s
                 raise ValueError(f"引用了未授权的表: {ref}")
 
     if not ast.args.get("limit"):
-        sql = f"{sql} LIMIT 1000"
-        logger.info("Auto-added LIMIT 1000")
+        sql = f"{sql} LIMIT 100"
+        logger.info("Auto-added LIMIT 100")
 
     return sql
 

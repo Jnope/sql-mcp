@@ -1,9 +1,12 @@
 import os
+import re
 import logging
 import psycopg2
 import psycopg2.extras
 import pgvector.psycopg2
 import httpx
+import sqlglot
+from sqlglot import exp
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -17,11 +20,133 @@ EMBEDDING_API_URL = os.environ.get(
     "EMBEDDING_API_URL", "http://172.18.192.76:11434/v1/embeddings"
 )
 EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "bge-m3")
-EMBEDDING_DIM = int(os.environ.get("EMBEDDING_DIM", "1024"))
 EMBEDDING_API_KEY = os.environ.get("EMBEDDING_API_KEY", "not-needed")
 
+COMMON_FIELDS = {
+    "id", "name", "short_name", "desc", "description", "comment", "type",
+    "datetime", "create_time", "update_time", "dt", "date", "time", "fake_datetime",
+    "code", "stock_code", "symbol", "ts_code", "ticker", "company_name",
+    "trade_day", "trade_date",
+    "open", "high", "low", "close", "volume", "turnover",
+    "limit_up", "limit_down", "total_volume", "total_turnover", "vwap",
+}
 
-def _embed(texts: list[str]) -> list[list[float]]:
+
+_KV_COMMENT_RE = re.compile(r"(?:\||^)\s*(\w+)\s*=\s*([^|]+?)(?=\s*\||\s*$)")
+
+def _parse_kv_comment(comment: str) -> dict[str, str]:
+    if not comment:
+        return {}
+    return {k.lower(): v.strip() for k, v in _KV_COMMENT_RE.findall(comment)}
+
+
+def parse_ddl_to_meta(ddl: str) -> dict | None:
+    if not ddl:
+        return None
+    try:
+        parsed = sqlglot.parse_one(ddl, read="hive")
+    except Exception as e:
+        logger.error("Failed to parse ddl: %s, err: %s", ddl, e)
+        return None
+    if not isinstance(parsed, exp.Create):
+        return None
+
+    table = parsed.this.this if isinstance(parsed.this, exp.Schema) else parsed.this
+    raw_name = table.name
+
+    if "." in raw_name:
+        name_parts = raw_name.split(".", 1)
+        schema_name = name_parts[0]
+        table_name = name_parts[1]
+    else:
+        schema_name = table.db or ""
+        table_name = raw_name
+
+    table_comment = ""
+    table_kv = {}
+    for prop in (parsed.args.get("properties") or []):
+        if isinstance(prop, exp.SchemaCommentProperty):
+            table_comment = prop.this.name
+            table_kv = _parse_kv_comment(table_comment)
+            break
+
+    fields = []
+    for col in parsed.find_all(exp.ColumnDef):
+        col_name = col.name.lower()
+        if col_name in COMMON_FIELDS:
+            continue
+        comment_text = ""
+        for constraint in col.args.get("constraints", []):
+            kind = constraint.args.get("kind")
+            if isinstance(kind, exp.CommentColumnConstraint):
+                comment_text = kind.this.name.strip()
+                break
+        if comment_text:
+            fields.append(f"{col_name}:{comment_text}")
+        else:
+            fields.append(col_name)
+
+    return {
+        "schema_name": schema_name,
+        "table_name": table_name,
+        "table_comment": table_comment,
+        "desc": table_kv.get("desc", ""),
+        "types": table_kv.get("type", "").replace("，", ",").split(",") if table_kv.get("type") else [],
+        "kv": table_kv,
+        "fields": fields,
+    }
+
+
+def build_doc_from_meta(meta: dict, db: str, table: str, comment: str = "") -> str:
+    if not meta:
+        return f"库:{db}，表:{table}，描述:{comment or 'unknow'}"
+    desc = comment or meta["desc"] or meta["table_comment"] or table.replace("_", " ")
+    types = ",".join(meta["types"])
+    doc = f"库:{db}，表:{table}，描述:{desc}"
+    if types:
+        doc += f"，类型:{types}"
+    if meta["fields"]:
+        doc += f"，字段:{','.join(meta['fields'])}"
+    return doc
+
+
+def _extract_distinctive_fields(ddl: str) -> list[str]:
+    if not ddl:
+        return []
+    try:
+        parsed = sqlglot.parse_one(ddl, read="hive")
+    except Exception:
+        return []
+    if not isinstance(parsed, exp.Create):
+        return []
+    fields = []
+    for col in parsed.find_all(exp.ColumnDef):
+        col_name = col.name.lower()
+        if col_name in COMMON_FIELDS:
+            continue
+        comment_text = ""
+        for constraint in col.args.get("constraints", []):
+            kind = constraint.args.get("kind")
+            if isinstance(kind, exp.CommentColumnConstraint):
+                comment_text = kind.this.name.strip()
+                break
+        if comment_text:
+            fields.append(f"{col_name}:{comment_text}")
+        else:
+            fields.append(col_name)
+    return fields
+
+
+def _build_doc(db: str, table_name: str, desc: str, type_: str, ddl: str) -> str:
+    doc = f"库:{db}，表:{table_name}，描述:{desc} 类型:{type_}"
+    if ddl:
+        fields_from_ddl = _extract_distinctive_fields(ddl)
+        if fields_from_ddl:
+            doc += f"，字段:{','.join(fields_from_ddl)}"
+    return doc
+
+
+def embed(texts: list[str]) -> list[list[float]]:
     resp = httpx.post(
         EMBEDDING_API_URL,
         json={"model": EMBEDDING_MODEL, "input": texts},
@@ -58,14 +183,18 @@ class SchemaRetriever:
     def build_index(self, tables: list[dict]):
         rows = []
         for t in tables:
-            doc = f"库:{t['db']} 表:{t['table_name']} 描述:{t.get('desc', '')} 类型:{t.get('type', '')}"
-            emb = _embed([doc])[0]
+            desc = t.get('desc', '')
+            types: list[str] = t.get("types", [])
+            doc = _build_doc(t['db'], t['table_name'], desc, ",".join(types), t.get('ddl', ''))
+            emb = embed([doc])[0]
             rows.append((
                 t["schema_name"],
                 t["db"],
                 t["table_name"],
                 doc,
-                t.get("types", []),
+                desc,
+                t.get("ddl", ""),
+                types,
                 emb,
             ))
 
@@ -74,25 +203,27 @@ class SchemaRetriever:
                 cur,
                 """
                 INSERT INTO table_embeddings
-                    (schema_name, db, table_name, doc, types, embedding)
+                    (schema_name, db, table_name, doc, "desc", ddl, types, embedding)
                 VALUES %s
                 ON CONFLICT (schema_name, db, table_name)
-                DO UPDATE SET doc      = EXCLUDED.doc,
-                              types    = EXCLUDED.types,
+                DO UPDATE SET doc       = EXCLUDED.doc,
+                              "desc"      = EXCLUDED."desc",
+                              ddl       = EXCLUDED.ddl,
+                              types     = EXCLUDED.types,
                               embedding = EXCLUDED.embedding
                 """,
                 rows,
-                template="(%s, %s, %s, %s, %s, %s)",
+                template="(%s, %s, %s, %s, %s, %s, %s, %s)",
             )
         self.conn.commit()
         logger.info("Built index for %d tables", len(rows))
 
     def retrieve(self, question: str, top_n: int = 5) -> list[dict]:
-        query_emb = _embed([question])[0]
+        query_emb = embed([question])[0]
         with self.conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT schema_name, db, table_name, doc, types,
+                SELECT schema_name, db, table_name, doc, "desc", ddl, types,
                        embedding <=> %s AS distance
                 FROM table_embeddings
                 ORDER BY embedding <=> %s
@@ -108,8 +239,10 @@ class SchemaRetriever:
                 "db": r[1],
                 "table_name": r[2],
                 "doc": r[3],
-                "types": r[4],
-                "_distance": float(r[5]),
+                "desc": r[4],
+                "ddl": r[5],
+                "types": r[6],
+                "_distance": float(r[7]),
             }
             for r in hits
         ]
@@ -120,23 +253,25 @@ class SchemaRetriever:
         db: str,
         table_name: str,
         desc: str = "",
-        type: str = "",
         types: list[str] | None = None,
+        ddl: str = "",
     ):
-        doc = f"库:{db} 表:{table_name} 描述:{desc} 类型:{type}"
-        emb = _embed([doc])[0]
+        doc = _build_doc(db, table_name, desc, ",".join(types or []), ddl)
+        emb = embed([doc])[0]
         with self.conn.cursor() as cur:
             cur.execute(
                 """
                 INSERT INTO table_embeddings
-                    (schema_name, db, table_name, doc, types, embedding)
-                VALUES (%s, %s, %s, %s, %s, %s)
+                    (schema_name, db, table_name, doc, "desc", ddl, types, embedding)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (schema_name, db, table_name)
-                DO UPDATE SET doc      = EXCLUDED.doc,
-                              types    = EXCLUDED.types,
+                DO UPDATE SET doc       = EXCLUDED.doc,
+                              "desc"      = EXCLUDED."desc",
+                              ddl       = EXCLUDED.ddl,
+                              types     = EXCLUDED.types,
                               embedding = EXCLUDED.embedding
                 """,
-                (schema_name, db, table_name, doc, types or [], emb),
+                (schema_name, db, table_name, doc, desc, ddl, types or [], emb),
             )
         self.conn.commit()
         logger.info("Upserted vector for %s.%s.%s", schema_name, db, table_name)
@@ -151,6 +286,50 @@ class SchemaRetriever:
         self.conn.commit()
         logger.info("Deleted vector for %s.%s.%s (rows: %s)", schema_name, db, table_name, deleted)
         return deleted
+
+    def update_table_ddl(self, schema_name: str, db: str, table_name: str, ddl: str):
+        with self.conn.cursor() as cur:
+            cur.execute(
+                "SELECT doc, \"desc\", types FROM table_embeddings WHERE schema_name = %s AND db = %s AND table_name = %s",
+                (schema_name, db, table_name),
+            )
+            row = cur.fetchone()
+        if row is None:
+            logger.warning("Table %s.%s.%s not found for DDL update", schema_name, db, table_name)
+            return 0
+
+        old_doc, types = row
+        m = re.match(r'库:\S+ 表:\S+ 描述:(.*?) 类型:(.*?)( 字段:.*)?$', old_doc or "")
+        desc = m.group(1) if m else ""
+        type_ = m.group(2) if m else ""
+
+        new_doc = _build_doc(db, table_name, desc, type_, ddl)
+        emb = embed([new_doc])[0] if new_doc != old_doc else None
+
+        with self.conn.cursor() as cur:
+            if emb is not None:
+                cur.execute(
+                    """
+                    UPDATE table_embeddings
+                    SET ddl = %s, doc = %s, embedding = %s
+                    WHERE schema_name = %s AND db = %s AND table_name = %s
+                    """,
+                    (ddl, new_doc, emb, schema_name, db, table_name),
+                )
+            else:
+                cur.execute(
+                    """
+                    UPDATE table_embeddings
+                    SET ddl = %s
+                    WHERE schema_name = %s AND db = %s AND table_name = %s
+                    """,
+                    (ddl, schema_name, db, table_name),
+                )
+            updated = cur.rowcount
+        self.conn.commit()
+        if updated:
+            logger.info("Updated DDL+doc for %s.%s.%s", schema_name, db, table_name)
+        return updated
 
     def close(self):
         if self._conn and not self._conn.closed:

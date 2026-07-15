@@ -6,6 +6,7 @@ from fastapi import FastAPI
 
 from agent.utils.log_util import setup_admin_logging
 from api.routes import router
+from api.sync_task import start_sync_task, stop_sync_task
 
 setup_admin_logging()
 logger = logging.getLogger("sql-agent-api")
@@ -14,7 +15,9 @@ logger = logging.getLogger("sql-agent-api")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Admin API starting")
+    await start_sync_task()
     yield
+    await stop_sync_task()
     from api.routes import get_retriever
 
     try:

@@ -11,7 +11,10 @@ logger = logging.getLogger(__name__)
 
 TIMELYRE_PROXY = os.environ.get("TIMELYRE_PROXY", "http://127.0.0.1:8090")
 TIMELYRE_CONN = os.environ.get("TIMELYRE_CONN", "127.0.0.1:8090")
-TIMELYRE_DB = os.environ.get("TIMELYRE_DB", "meta_data")
+TIMELYRE_DEFAULT_DB = os.environ.get("TIMELYRE_DB", "default")
+TIMELYRE_USER = os.environ.get("TIMELYRE_USER", "")
+TIMELYRE_PASSWORD = os.environ.get("TIMELYRE_PASSWORD", "")
+TIMELYRE_TOKEN = os.environ.get("TIMELYRE_TOKEN", "")
 
 PYTHON_TIMEOUT = int(os.environ.get("PYTHON_EXEC_TIMEOUT", "30"))
 
@@ -54,25 +57,73 @@ def _timeout_handler(signum, frame):
 
 
 class Executor:
+    _instance: "Executor | None" = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance._conns: dict[str, DatabaseConn] = {}
+        return cls._instance
+
     def __init__(self):
-        self._conn: DatabaseConn | None = None
+        pass
 
-    @property
-    def db_conn(self) -> DatabaseConn:
-        if self._conn is None:
-            self._conn = DatabaseConn(
-                jdbc_http_proxy=TIMELYRE_PROXY,
-                real_conn=TIMELYRE_CONN,
-                db=TIMELYRE_DB,
-                auto_close=False,
+    def _conn_key(self, schema_name: str, db: str) -> str:
+        return f"{schema_name}:{db}"
+
+    @staticmethod
+    def _get_conn_info(schema_name: str) -> dict:
+        prefix = f"TIMELYRE_PROXY_{schema_name.upper()}"
+        proxy = os.environ.get(prefix)
+        if not proxy:
+            logger.warning("No env %s for %s, falling back to defaults", prefix, schema_name)
+            return {
+                "jdbc_http_proxy": TIMELYRE_PROXY,
+                "real_conn": TIMELYRE_CONN,
+                "db_user": TIMELYRE_USER,
+                "db_password": TIMELYRE_PASSWORD,
+                "db_token": TIMELYRE_TOKEN,
+            }
+        conn = os.environ.get(f"TIMELYRE_CONN_{schema_name.upper()}", proxy)
+        user = os.environ.get(f"TIMELYRE_USER_{schema_name.upper()}", "")
+        password = os.environ.get(f"TIMELYRE_PASSWORD_{schema_name.upper()}", "")
+        token = os.environ.get(f"TIMELYRE_TOKEN_{schema_name.upper()}", "")
+        return {
+            "jdbc_http_proxy": proxy,
+            "real_conn": conn,
+            "db_user": user,
+            "db_password": password,
+            "db_token": token,
+        }
+
+    def db_conn(self, schema_name: str, db: str | None = None) -> DatabaseConn:
+        db = db or TIMELYRE_DEFAULT_DB
+        key = self._conn_key(schema_name, db)
+        if key not in self._conns:
+            info = self._get_conn_info(schema_name)
+            kwargs = dict(
+                jdbc_http_proxy=info["jdbc_http_proxy"],
+                real_conn=info["real_conn"],
+                db=db,
+                auth_type="ldap",
+                disable_cancel=True,
+                session_timeout=300000,
+                login_timeout=300000,
             )
-        return self._conn
+            if info.get("db_user"):
+                kwargs["username"] = info["db_user"]
+            if info.get("db_password"):
+                kwargs["password"] = info["db_password"]
+            if info.get("db_token"):
+                kwargs["token"] = info["db_token"]
+            self._conns[key] = DatabaseConn(**kwargs)
+        return self._conns[key]
 
-    def execute_sql(self, sql: str) -> dict:
+    def execute_sql(self, sql: str, schema_name: str = "", db: str | None = None) -> dict:
         sql = validate_readonly(sql)
-        logger.info("Executing SQL: %s", sql)
+        logger.info("Executing SQL on %s.%s: %s", schema_name, db or TIMELYRE_DEFAULT_DB, sql)
 
-        conn = self.db_conn
+        conn = self.db_conn(schema_name, db)
         df = conn.run_sql(sql)
 
         if df is None:
@@ -134,13 +185,58 @@ class Executor:
 
         return {"value": str(result) if result is not None else ""}
 
+    def get_table_ddl(self, schema_name: str, db: str | None, table_name: str) -> str:
+        db = db or TIMELYRE_DEFAULT_DB
+        full_table = f"{schema_name}.{db}.{table_name}"
+        try:
+            conn = self.db_conn(schema_name, db)
+            ddl_df = conn.run_sql(f"SHOW CREATE TABLE {full_table}")
+            if ddl_df is None:
+                return ""
+            if isinstance(ddl_df, pd.DataFrame) and not ddl_df.empty:
+                return str(ddl_df.iloc[0, 0])
+            if isinstance(ddl_df, list) and len(ddl_df) > 0:
+                if isinstance(ddl_df[0], dict):
+                    return str(list(ddl_df[0].values())[0])
+                return str(ddl_df[0])
+            return str(ddl_df)
+        except Exception as e:
+            logger.warning("Failed to get DDL for %s: %s", full_table, e)
+            return ""
+
+    def list_databases(self, schema_name: str) -> list[str]:
+        try:
+            conn = self.db_conn(schema_name, TIMELYRE_DEFAULT_DB)
+            result = conn.show_databases()
+            if isinstance(result, list):
+                return [str(r) for r in result]
+            if isinstance(result, pd.DataFrame) and not result.empty:
+                return result.iloc[:, 0].tolist()
+            return []
+        except Exception as e:
+            logger.warning("Failed to list databases for %s: %s", schema_name, e)
+            return []
+
+    def list_tables(self, schema_name: str, db: str) -> list[str]:
+        try:
+            conn = self.db_conn(schema_name, db)
+            result = conn.show_tables()
+            if isinstance(result, list):
+                return [str(r) for r in result]
+            if isinstance(result, pd.DataFrame) and not result.empty:
+                return result.iloc[:, 0].tolist()
+            return []
+        except Exception as e:
+            logger.warning("Failed to list tables for %s.%s: %s", schema_name, db, e)
+            return []
+
     def close(self):
-        if self._conn is not None:
+        for key, conn in self._conns.items():
             try:
-                self._conn.close_connection()
+                conn.close_connection()
             except Exception:
                 pass
-            self._conn = None
+        self._conns.clear()
 
     @staticmethod
     def _df_to_result(df: pd.DataFrame) -> dict:

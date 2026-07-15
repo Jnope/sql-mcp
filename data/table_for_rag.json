@@ -1,0 +1,394 @@
+[
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "stock_code",
+    "desc": "A股股票基础信息",
+    "type": "组合数据",
+    "ddl": "CREATE TABLE `stock_code`(\n  `id` int DEFAULT NULL COMMENT ' ',\n  `code` string DEFAULT NULL COMMENT '标的代码，如000004.SZ',\n  `name` string DEFAULT NULL COMMENT '股票名称，如国华退',\n  `short_name` string DEFAULT NULL COMMENT '缩略名，如GHT',\n  `category` string DEFAULT NULL COMMENT '股种：A，B',\n  `exchange` string DEFAULT NULL COMMENT '交易所：SH上交所、SZ深交所',\n  `start_date` string DEFAULT NULL COMMENT '上市日期，如1990-12-01',\n  `end_date` string DEFAULT NULL COMMENT '退市日期，如2026-07-14或-',\n  `company_id` int DEFAULT NULL COMMENT '公司id，如430000004',\n  `company_name` string DEFAULT NULL COMMENT '公司全称，如深圳国华网安科技股份有限公司',\n  `ipo_shares` double DEFAULT NULL COMMENT '初始上市股数',\n  `book_price` double DEFAULT NULL COMMENT '发行价格，元',\n  `par_value` double DEFAULT NULL COMMENT '面值，元',\n  `state_id` int DEFAULT NULL COMMENT '上市状态id：301001 至 301006',\n  `state` string DEFAULT NULL COMMENT '上市状态：终止上市，正常上市，ST，*ST，进入退市整理期',\n  `type` string DEFAULT NULL COMMENT '类型：stock',\n  `fake_datetime` timestamp DEFAULT NULL COMMENT '伪时间戳，统一：1990-01-01 00:00:00，用于覆写'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='fake_datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "sw_industry",
+    "desc": "申万行业分类",
+    "type": "组合数据",
+    "ddl": "CREATE TABLE `sw_industry`(\n  `code` string DEFAULT NULL COMMENT '股票代码',\n  `datetime` timestamp DEFAULT NULL COMMENT '记录时间',\n  `sw_l1_code` string DEFAULT NULL COMMENT '申万一级行业代码',\n  `sw_l1_name` string DEFAULT NULL COMMENT '申万一级行业名称',\n  `sw_l2_code` string DEFAULT NULL COMMENT '申万二级行业代码',\n  `sw_l2_name` string DEFAULT NULL COMMENT '申万二级行业名称',\n  `sw_l3_code` string DEFAULT NULL COMMENT '申万三级行业代码',\n  `sw_l3_name` string DEFAULT NULL COMMENT '申万三级行业名称'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "concept_code",
+    "desc": "概念码表",
+    "type": "组合数据",
+    "ddl": "CREATE TABLE `concept_code`(\n  `code` string DEFAULT NULL COMMENT '概念代码',\n  `concept` string DEFAULT NULL COMMENT '概念名称',\n  `list_date` timestamp DEFAULT NULL COMMENT '上市时间'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='list_date',\n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "concept_component",
+    "desc": "概念成分股",
+    "type": "组合数据",
+    "ddl": "CREATE TABLE `concept_component`(\n  `code` string DEFAULT NULL COMMENT '股票代码', \n  `datetime` timestamp DEFAULT NULL COMMENT '时间戳', \n  `concept_code` string DEFAULT NULL COMMENT '概念代码', \n  `concept_name` string DEFAULT NULL COMMENT '概念名称'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "stock_bar_1min",
+    "desc": "1 分钟K线行情数据",
+    "type": "行情数据",
+    "ddl": "CREATE TABLE `stock_bar_1min`(\n  `code` string DEFAULT NULL COMMENT '股票代码', \n  `datetime` timestamp DEFAULT NULL COMMENT '时间', \n  `trade_day` string DEFAULT NULL COMMENT '交易日', \n  `open` double DEFAULT NULL COMMENT '开盘价', \n  `high` double DEFAULT NULL COMMENT '最高价', \n  `low` double DEFAULT NULL COMMENT '最低价', \n  `close` double DEFAULT NULL COMMENT '收盘价', \n  `volume` double DEFAULT NULL COMMENT '成交量', \n  `turnover` double DEFAULT NULL COMMENT '成交额', \n  `vwap` double DEFAULT NULL COMMENT '成交量加权平均价', \n  `limit_up` double DEFAULT NULL COMMENT '涨停价', \n  `limit_down` double DEFAULT NULL COMMENT '跌停价', \n  `total_volume` double DEFAULT NULL COMMENT '总成交量',\n  `total_turnover` double DEFAULT NULL COMMENT '总成交额'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "stock_bar_5min",
+    "desc": "5 分钟K线行情数据",
+    "type": "行情数据",
+    "ddl": "CREATE TABLE `stock_bar_5min`(\n  `code` string DEFAULT NULL COMMENT '股票代码', \n  `datetime` timestamp DEFAULT NULL COMMENT '时间', \n  `trade_day` string DEFAULT NULL COMMENT '交易日', \n  `open` double DEFAULT NULL COMMENT '开盘价', \n  `high` double DEFAULT NULL COMMENT '最高价', \n  `low` double DEFAULT NULL COMMENT '最低价', \n  `close` double DEFAULT NULL COMMENT '收盘价', \n  `volume` double DEFAULT NULL COMMENT '成交量', \n  `turnover` double DEFAULT NULL COMMENT '成交额', \n  `vwap` double DEFAULT NULL COMMENT '成交量加权平均价', \n  `limit_up` double DEFAULT NULL COMMENT '涨停价', \n  `limit_down` double DEFAULT NULL COMMENT '跌停价', \n  `total_volume` double DEFAULT NULL COMMENT '总成交量',\n  `total_turnover` double DEFAULT NULL COMMENT '总成交额'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "stock_bar_10min",
+    "desc": "10 分钟K线行情数据",
+    "type": "行情数据",
+    "ddl": "CREATE TABLE `stock_bar_10min`(\n  `code` string DEFAULT NULL COMMENT '股票代码', \n  `datetime` timestamp DEFAULT NULL COMMENT '时间', \n  `trade_day` string DEFAULT NULL COMMENT '交易日', \n  `open` double DEFAULT NULL COMMENT '开盘价', \n  `high` double DEFAULT NULL COMMENT '最高价', \n  `low` double DEFAULT NULL COMMENT '最低价', \n  `close` double DEFAULT NULL COMMENT '收盘价', \n  `volume` double DEFAULT NULL COMMENT '成交量', \n  `turnover` double DEFAULT NULL COMMENT '成交额', \n  `vwap` double DEFAULT NULL COMMENT '成交量加权平均价', \n  `limit_up` double DEFAULT NULL COMMENT '涨停价', \n  `limit_down` double DEFAULT NULL COMMENT '跌停价', \n  `total_volume` double DEFAULT NULL COMMENT '总成交量',\n  `total_turnover` double DEFAULT NULL COMMENT '总成交额'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "stock_bar_30min",
+    "desc": "30 分钟K线行情数据",
+    "type": "行情数据",
+    "ddl": "CREATE TABLE `stock_bar_30min`(\n  `code` string DEFAULT NULL COMMENT '股票代码', \n  `datetime` timestamp DEFAULT NULL COMMENT '时间', \n  `trade_day` string DEFAULT NULL COMMENT '交易日', \n  `open` double DEFAULT NULL COMMENT '开盘价', \n  `high` double DEFAULT NULL COMMENT '最高价', \n  `low` double DEFAULT NULL COMMENT '最低价', \n  `close` double DEFAULT NULL COMMENT '收盘价', \n  `volume` double DEFAULT NULL COMMENT '成交量', \n  `turnover` double DEFAULT NULL COMMENT '成交额', \n  `vwap` double DEFAULT NULL COMMENT '成交量加权平均价', \n  `limit_up` double DEFAULT NULL COMMENT '涨停价', \n  `limit_down` double DEFAULT NULL COMMENT '跌停价', \n  `total_volume` double DEFAULT NULL COMMENT '总成交量',\n  `total_turnover` double DEFAULT NULL COMMENT '总成交额'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "stock_bar_60min",
+    "desc": "60 分钟K线行情数据",
+    "type": "行情数据",
+    "ddl": "CREATE TABLE `stock_bar_60min`(\n  `code` string DEFAULT NULL COMMENT '股票代码', \n  `datetime` timestamp DEFAULT NULL COMMENT '时间', \n  `trade_day` string DEFAULT NULL COMMENT '交易日', \n  `open` double DEFAULT NULL COMMENT '开盘价', \n  `high` double DEFAULT NULL COMMENT '最高价', \n  `low` double DEFAULT NULL COMMENT '最低价', \n  `close` double DEFAULT NULL COMMENT '收盘价', \n  `volume` double DEFAULT NULL COMMENT '成交量', \n  `turnover` double DEFAULT NULL COMMENT '成交额', \n  `vwap` double DEFAULT NULL COMMENT '成交量加权平均价', \n  `limit_up` double DEFAULT NULL COMMENT '涨停价', \n  `limit_down` double DEFAULT NULL COMMENT '跌停价', \n  `total_volume` double DEFAULT NULL COMMENT '总成交量',\n  `total_turnover` double DEFAULT NULL COMMENT '总成交额'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "stock_bar_1day",
+    "desc": "日频K线行情数据",
+    "type": "行情数据",
+    "ddl": "CREATE TABLE `stock_bar_1day`(\n  `code` string DEFAULT NULL COMMENT '股票代码', \n  `datetime` timestamp DEFAULT NULL COMMENT '时间', \n  `trade_day` string DEFAULT NULL COMMENT '交易日', \n  `open` double DEFAULT NULL COMMENT '开盘价', \n  `high` double DEFAULT NULL COMMENT '最高价', \n  `low` double DEFAULT NULL COMMENT '最低价', \n  `close` double DEFAULT NULL COMMENT '收盘价', \n  `volume` double DEFAULT NULL COMMENT '成交量', \n  `turnover` double DEFAULT NULL COMMENT '成交额',  \n  `vwap` double DEFAULT NULL COMMENT '成交量加权平均价', \n  `factor` double DEFAULT NULL COMMENT '复权因子', \n  `limit_up` double DEFAULT NULL COMMENT '涨停价', \n  `limit_down` double DEFAULT NULL COMMENT '跌停价'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "stock_snapshot",
+    "desc": "level2频率行情快照",
+    "type": "行情数据",
+    "ddl": "CREATE TABLE `stock_snapshot`(\n  `code` string DEFAULT NULL COMMENT '股票代码', \n  `datetime` timestamp DEFAULT NULL COMMENT '记录时间', \n  `trade_day` string DEFAULT NULL COMMENT '交易日', \n  `last_price` double DEFAULT NULL COMMENT '最新价', \n  `volume` double DEFAULT NULL COMMENT '累计成交量', \n  `turnover` double DEFAULT NULL COMMENT '累计成交额', \n  `trade_num` double DEFAULT NULL COMMENT '成交笔数', \n  `high` double DEFAULT NULL COMMENT '当日最高价', \n  `low` double DEFAULT NULL COMMENT '当日最低价', \n  `open` double DEFAULT NULL COMMENT '当日开盘价', \n  `pre_close` double DEFAULT NULL COMMENT '前收盘价',\n  `ask_price_1` double DEFAULT NULL COMMENT '卖1价',\n  `ask_price_2` double DEFAULT NULL COMMENT '卖2价',\n  `ask_price_3` double DEFAULT NULL COMMENT '卖3价',\n  `ask_price_4` double DEFAULT NULL COMMENT '卖4价',\n  `ask_price_5` double DEFAULT NULL COMMENT '卖5价',\n  `ask_price_6` double DEFAULT NULL COMMENT '卖6价',\n  `ask_price_7` double DEFAULT NULL COMMENT '卖7价',\n  `ask_price_8` double DEFAULT NULL COMMENT '卖8价',\n  `ask_price_9` double DEFAULT NULL COMMENT '卖9价',\n  `ask_price_10` double DEFAULT NULL COMMENT '卖10价',\n  `bid_price_1` double DEFAULT NULL COMMENT '买1价',\n  `bid_price_2` double DEFAULT NULL COMMENT '买2价',\n  `bid_price_3` double DEFAULT NULL COMMENT '买3价',\n  `bid_price_4` double DEFAULT NULL COMMENT '买4价',\n  `bid_price_5` double DEFAULT NULL COMMENT '买5价',\n  `bid_price_6` double DEFAULT NULL COMMENT '买6价',\n  `bid_price_7` double DEFAULT NULL COMMENT '买7价',\n  `bid_price_8` double DEFAULT NULL COMMENT '买8价',\n  `bid_price_9` double DEFAULT NULL COMMENT '买9价',\n  `bid_price_10` double DEFAULT NULL COMMENT '买10价',\n  `ask_volume_1` double DEFAULT NULL COMMENT '卖1量',\n  `ask_volume_2` double DEFAULT NULL COMMENT '卖2量',\n  `ask_volume_3` double DEFAULT NULL COMMENT '卖3量',\n  `ask_volume_4` double DEFAULT NULL COMMENT '卖4量',\n  `ask_volume_5` double DEFAULT NULL COMMENT '卖5量',\n  `ask_volume_6` double DEFAULT NULL COMMENT '卖6量',\n  `ask_volume_7` double DEFAULT NULL COMMENT '卖7量',\n  `ask_volume_8` double DEFAULT NULL COMMENT '卖8量',\n  `ask_volume_9` double DEFAULT NULL COMMENT '卖9量',\n  `ask_volume_10` double DEFAULT NULL COMMENT '卖10量',\n  `bid_volume_1` double DEFAULT NULL COMMENT '买1量',\n  `bid_volume_2` double DEFAULT NULL COMMENT '买2量',\n  `bid_volume_3` double DEFAULT NULL COMMENT '买3量',\n  `bid_volume_4` double DEFAULT NULL COMMENT '买4量',\n  `bid_volume_5` double DEFAULT NULL COMMENT '买5量',\n  `bid_volume_6` double DEFAULT NULL COMMENT '买6量',\n  `bid_volume_7` double DEFAULT NULL COMMENT '买7量',\n  `bid_volume_8` double DEFAULT NULL COMMENT '买8量',\n  `bid_volume_9` double DEFAULT NULL COMMENT '买9量',\n  `bid_volume_10` double DEFAULT NULL COMMENT '买10量',\n  `ask_order_1` double DEFAULT NULL COMMENT '卖订1量',\n  `ask_order_2` double DEFAULT NULL COMMENT '卖订2量',\n  `ask_order_3` double DEFAULT NULL COMMENT '卖订3量',\n  `ask_order_4` double DEFAULT NULL COMMENT '卖订4量',\n  `ask_order_5` double DEFAULT NULL COMMENT '卖订5量',\n  `ask_order_6` double DEFAULT NULL COMMENT '卖订6量',\n  `ask_order_7` double DEFAULT NULL COMMENT '卖订7量',\n  `ask_order_8` double DEFAULT NULL COMMENT '卖订8量',\n  `ask_order_9` double DEFAULT NULL COMMENT '卖订9量',\n  `ask_order_10` double DEFAULT NULL COMMENT '卖订10量',\n  `bid_order_1` double DEFAULT NULL COMMENT '买订1量',\n  `bid_order_2` double DEFAULT NULL COMMENT '买订2量',\n  `bid_order_3` double DEFAULT NULL COMMENT '买订3量',\n  `bid_order_4` double DEFAULT NULL COMMENT '买订4量',\n  `bid_order_5` double DEFAULT NULL COMMENT '买订5量',\n  `bid_order_6` double DEFAULT NULL COMMENT '买订6量',\n  `bid_order_7` double DEFAULT NULL COMMENT '买订7量',\n  `bid_order_8` double DEFAULT NULL COMMENT '买订8量',\n  `bid_order_9` double DEFAULT NULL COMMENT '买订9量',\n  `bid_order_10` double DEFAULT NULL COMMENT '买订10量',\n  `ask_avg_price` double DEFAULT NULL COMMENT '加权平均卖价', \n  `bid_avg_price` double DEFAULT NULL COMMENT '加权平均买价', \n  `total_ask_volume` double DEFAULT NULL COMMENT '叫卖总量', \n  `total_bid_volume` double DEFAULT NULL COMMENT '叫买总量', \n  `limit_up` double DEFAULT NULL COMMENT '涨停价', \n  `limit_down` double DEFAULT NULL COMMENT '跌停价'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "stock_money_flow",
+    "desc": "资金流向，日更",
+    "type": "行情数据",
+    "ddl": "CREATE TABLE `stock_money_flow`(\n  `code` string DEFAULT NULL COMMENT '股票代码', \n  `trade_day` timestamp DEFAULT NULL COMMENT '交易日', \n  `netflow_xl` double DEFAULT NULL COMMENT '超大单净额', \n  `netflow_l` double DEFAULT NULL COMMENT '大单净额', \n  `netflow_m` double DEFAULT NULL COMMENT '中单净额', \n  `netflow_s` double DEFAULT NULL COMMENT '小单净额', \n  `datetime` timestamp DEFAULT NULL COMMENT '时间戳'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "capital",
+    "desc": "财务数据，日更",
+    "type": "财务数据",
+    "ddl": "CREATE TABLE `capital`(\n  `code` string DEFAULT NULL COMMENT '股票代码', \n  `datetime` timestamp DEFAULT NULL COMMENT '记录时间', \n  `capitalization` double DEFAULT NULL COMMENT '总股本(万股)', \n  `circulating_cap` double DEFAULT NULL COMMENT '流通股本(万股)', \n  `market_cap` double DEFAULT NULL COMMENT '总市值(亿元)', \n  `circulating_market_cap` double DEFAULT NULL COMMENT '流通市值(亿元)', \n  `turnover_ratio` double DEFAULT NULL COMMENT '换手率(%)', \n  `pe_ratio` double DEFAULT NULL COMMENT '市盈率(PE, TTM)', \n  `pe_ratio_lyr` double DEFAULT NULL COMMENT '市盈率(PE)', \n  `pb_ratio` double DEFAULT NULL COMMENT '市净率(PB)', \n  `ps_ratio` double DEFAULT NULL COMMENT '市销率(PS, TTM)', \n  `pcf_ratio` double DEFAULT NULL COMMENT '市现率(PCF, 现金净流量TTM)'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "finance_indicator",
+    "desc": "财务指标，日更",
+    "type": "财务数据",
+    "ddl": "CREATE TABLE `finance_indicator`(\n  `code` string DEFAULT NULL COMMENT '股票代码', \n  `datetime` timestamp DEFAULT NULL COMMENT '财报日期', \n  `report_period` string DEFAULT NULL COMMENT '财报统计的季度的最后一天', \n  `eps` double DEFAULT NULL COMMENT '每股收益 EPS(元)', \n  `adjusted_profit` double DEFAULT NULL COMMENT '扣除非经常损益后的净利润(元)', \n  `operating_profit` double DEFAULT NULL COMMENT '经营活动净收益(元)', \n  `value_change_profit` double DEFAULT NULL COMMENT '价值变动净收益(元)', \n  `roe` double DEFAULT NULL COMMENT '净资产收益率 ROE', \n  `inc_return` double DEFAULT NULL COMMENT '净资产收益率(扣除非经常损益)', \n  `roa` double DEFAULT NULL COMMENT '总资产净利率 ROA', \n  `net_profit_margin` double DEFAULT NULL COMMENT '销售净利率', \n  `gross_profit_margin` double DEFAULT NULL COMMENT '销售净利率', \n  `expense_to_total_revenue` double DEFAULT NULL COMMENT '营业总成本/营业总收入', \n  `operation_profit_to_total_revenue` double DEFAULT NULL COMMENT '营业利润/营业总收入', \n  `net_profit_to_total_revenue` double DEFAULT NULL COMMENT '净利润/营业总收入', \n  `operating_expense_to_total_revenue` double DEFAULT NULL COMMENT '营业费用/营业总收入', \n  `ga_expense_to_total_revenue` double DEFAULT NULL COMMENT '管理费用/营业总收入', \n  `financing_expense_to_total_revenue` double DEFAULT NULL COMMENT '财务费用/营业总收入', \n  `operating_profit_to_profit` double DEFAULT NULL COMMENT '经营活动净收益/利润总额', \n  `invesment_profit_to_profit` double DEFAULT NULL COMMENT '价值变动净收益/利润总额', \n  `adjusted_profit_to_profit` double DEFAULT NULL COMMENT '扣除非经常损益后的净利润/净利润', \n  `goods_sale_and_service_to_revenue` double DEFAULT NULL COMMENT '销售商品提供劳务收到的现金/营业收入', \n  `ocf_to_revenue` double DEFAULT NULL COMMENT '经营活动产生的现金流量净额/营业收入', \n  `ocf_to_operating_profit` double DEFAULT NULL COMMENT '经营活动产生的现金流量净额/经营活动净收益', \n  `inc_total_revenue_year_on_year` double DEFAULT NULL COMMENT '营业总收入同比增长率', \n  `inc_total_revenue_annual` double DEFAULT NULL COMMENT '营业总收入环比增长率', \n  `inc_revenue_year_on_year` double DEFAULT NULL COMMENT '营业收入同比增长率', \n  `inc_revenue_annual` double DEFAULT NULL COMMENT '营业收入环比增长率', \n  `inc_operation_profit_year_on_year` double DEFAULT NULL COMMENT '营业利润同比增长率', \n  `inc_operation_profit_annual` double DEFAULT NULL COMMENT '营业利润环比增长率', \n  `inc_net_profit_year_on_year` double DEFAULT NULL COMMENT '净利润同比增长率', \n  `inc_net_profit_annual` double DEFAULT NULL COMMENT '净利润环比增长率', \n  `inc_net_profit_to_shareholders_year_on_year` double DEFAULT NULL COMMENT '归属母公司股东的净利润同比增长率', \n  `inc_net_profit_to_shareholders_annual` double DEFAULT NULL COMMENT '归属母公司股东的净利润环比增长率', \n  `statement_type` string DEFAULT NULL COMMENT ' '\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "balance",
+    "desc": "资产负债表，日更",
+    "type": "财务数据",
+    "ddl": "CREATE TABLE `balance`(\n  `code` string DEFAULT NULL COMMENT '股票代码', \n  `datetime` timestamp DEFAULT NULL COMMENT '财报发布时间', \n  `report_period` string DEFAULT NULL COMMENT '财报统计的季度的最后一天,', \n  `statement_type` string DEFAULT NULL COMMENT '报表类型(dummy)', \n  `cash_equivalents` double DEFAULT NULL COMMENT '货币资金(元)', \n  `settlement_provi` double DEFAULT NULL COMMENT '结算备付金(元)', \n  `lend_capital` double DEFAULT NULL COMMENT '拆出资金(元)', \n  `trading_assets` double DEFAULT NULL COMMENT '交易性金融资产(元)', \n  `bill_receivable` double DEFAULT NULL COMMENT '应收票据(元)', \n  `account_receivable` double DEFAULT NULL COMMENT '应收账款(元)', \n  `advance_payment` double DEFAULT NULL COMMENT '预付款项(元)', \n  `insurance_receivables` double DEFAULT NULL COMMENT '应收保费(元)', \n  `reinsurance_receivables` double DEFAULT NULL COMMENT '应收分保账款(元)', \n  `reinsurance_contract_reserves_receivable` double DEFAULT NULL COMMENT '应收分保合同准备金(元)', \n  `interest_receivable` double DEFAULT NULL COMMENT '应收利息(元)', \n  `dividend_receivable` double DEFAULT NULL COMMENT '应收股利(元)', \n  `other_receivable` double DEFAULT NULL COMMENT '其他应收款(元)', \n  `bought_sellback_assets` double DEFAULT NULL COMMENT '买入返售金融资产(元)', \n  `inventories` double DEFAULT NULL COMMENT '存货(元)', \n  `non_current_asset_in_one_year` double DEFAULT NULL COMMENT '一年内到期的非流动资产(元)', \n  `other_current_assets` double DEFAULT NULL COMMENT '其他流动资产(元)', \n  `total_current_assets` double DEFAULT NULL COMMENT '流动资产合计(元)', \n  `loan_and_advance` double DEFAULT NULL COMMENT '发放委托贷款及垫款(元)', \n  `hold_for_sale_assets` double DEFAULT NULL COMMENT '可供出售金融资产(元)', \n  `hold_to_maturity_investments` double DEFAULT NULL COMMENT '持有至到期投资(元)', \n  `longterm_receivable_account` double DEFAULT NULL COMMENT '长期应收款(元)', \n  `longterm_equity_invest` double DEFAULT NULL COMMENT '长期股权投资(元)', \n  `investment_property` double DEFAULT NULL COMMENT '投资性房地产(元)', \n  `fixed_assets` double DEFAULT NULL COMMENT '固定资产(元)', \n  `constru_in_process` double DEFAULT NULL COMMENT '在建工程(元)', \n  `construction_materials` double DEFAULT NULL COMMENT '工程物资(元)', \n  `fixed_assets_liquidation` double DEFAULT NULL COMMENT '固定资产清理(元)', \n  `biological_assets` double DEFAULT NULL COMMENT '生产性生物资产(元)', \n  `oil_gas_assets` double DEFAULT NULL COMMENT '油气资产(元)', \n  `intangible_assets` double DEFAULT NULL COMMENT '无形资产(元)', \n  `development_expenditure` double DEFAULT NULL COMMENT '开发支出(元)', \n  `good_will` double DEFAULT NULL COMMENT '商誉(元)', \n  `long_deferred_expense` double DEFAULT NULL COMMENT '长期待摊费用(元)', \n  `deferred_tax_assets` double DEFAULT NULL COMMENT '递延所得税资产(元)', \n  `other_non_current_assets` double DEFAULT NULL COMMENT '其他非流动资产(元)', \n  `total_non_current_assets` double DEFAULT NULL COMMENT '非流动资产合计(元)', \n  `total_assets` double DEFAULT NULL COMMENT '资产总计(元)', \n  `shortterm_loan` double DEFAULT NULL COMMENT '短期借款(元)', \n  `borrowing_from_centralbank` double DEFAULT NULL COMMENT '向中央银行借款(元)', \n  `deposit_in_interbank` double DEFAULT NULL COMMENT '吸收存款及同业存放(元)', \n  `borrowing_capital` double DEFAULT NULL COMMENT '拆入资金(元)', \n  `trading_liability` double DEFAULT NULL COMMENT '交易性金融负债(元)', \n  `notes_payable` double DEFAULT NULL COMMENT '应付票据(元)', \n  `accounts_payable` double DEFAULT NULL COMMENT '应付账款(元)', \n  `advance_peceipts` double DEFAULT NULL COMMENT '预收款项(元)', \n  `sold_buyback_secu_proceeds` double DEFAULT NULL COMMENT '卖出回购金融资产款(元)', \n  `commission_payable` double DEFAULT NULL COMMENT '应付手续费及佣金(元)', \n  `salaries_payable` double DEFAULT NULL COMMENT '应付职工薪酬(元)', \n  `taxs_payable` double DEFAULT NULL COMMENT '应交税费(元)', \n  `interest_payable` double DEFAULT NULL COMMENT '应付利息(元)', \n  `dividend_payable` double DEFAULT NULL COMMENT '应付股利(元)', \n  `other_payable` double DEFAULT NULL COMMENT '其他应付款(元)', \n  `reinsurance_payables` double DEFAULT NULL COMMENT '应付分保账款(元)', \n  `insurance_contract_reserves` double DEFAULT NULL COMMENT '保险合同准备金(元)', \n  `proxy_secu_proceeds` double DEFAULT NULL COMMENT '代理买卖证券款(元)', \n  `receivings_from_vicariously_sold_securities` double DEFAULT NULL COMMENT '代理承销证券款(元)', \n  `non_current_liability_in_one_year` double DEFAULT NULL COMMENT '一年内到期的非流动负债(元)', \n  `other_current_liability` double DEFAULT NULL COMMENT '其他流动负债(元)', \n  `total_current_liability` double DEFAULT NULL COMMENT '流动负债合计(元)', \n  `longterm_loan` double DEFAULT NULL COMMENT '长期借款(元)', \n  `bonds_payable` double DEFAULT NULL COMMENT '应付债券(元)', \n  `longterm_account_payable` double DEFAULT NULL COMMENT '长期应付款(元)', \n  `specific_account_payable` double DEFAULT NULL COMMENT '专项应付款(元)', \n  `estimate_liability` double DEFAULT NULL COMMENT '预计负债(元)', \n  `deferred_tax_liability` double DEFAULT NULL COMMENT '递延所得税负债(元)', \n  `other_non_current_liability` double DEFAULT NULL COMMENT '其他非流动负债(元)', \n  `total_non_current_liability` double DEFAULT NULL COMMENT '非流动负债合计(元)', \n  `total_liability` double DEFAULT NULL COMMENT '负债合计(元)', \n  `paidin_capital` double DEFAULT NULL COMMENT '实收资本(或股本)(元)', \n  `capital_reserve_fund` double DEFAULT NULL COMMENT '资本公积金(元)', \n  `treasury_stock` double DEFAULT NULL COMMENT '库存股(元)', \n  `specific_reserves` double DEFAULT NULL COMMENT '专项储备(元)', \n  `surplus_reserve_fund` double DEFAULT NULL COMMENT '盈余公积金(元)', \n  `ordinary_risk_reserve_fund` double DEFAULT NULL COMMENT '一般风险准备(元)', \n  `retained_profit` double DEFAULT NULL COMMENT '未分配利润(元)', \n  `foreign_currency_report_conv_diff` double DEFAULT NULL COMMENT '外币报表折算差额(元)', \n  `equities_parent_company_owners` double DEFAULT NULL COMMENT '归属于母公司股东权益合计(元)', \n  `minority_interests` double DEFAULT NULL COMMENT '少数股东权益(元)', \n  `total_owner_equities` double DEFAULT NULL COMMENT '股东权益合计(元)', \n  `total_sheet_owner_equities` double DEFAULT NULL COMMENT '负债和股东权益合计'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "income",
+    "desc": "收入表，日更",
+    "type": "财务数据",
+    "ddl": "CREATE TABLE `income`(\n  `code` string DEFAULT NULL COMMENT '股票代码', \n  `datetime` timestamp DEFAULT NULL COMMENT '发布财报日期', \n  `report_period` string DEFAULT NULL COMMENT '财报统计的季度的最后一天', \n  `statement_type` double DEFAULT NULL COMMENT '报表类型(dummy)', \n  `total_operating_revenue` double DEFAULT NULL COMMENT '营业总收入(元)', \n  `operating_revenue` double DEFAULT NULL COMMENT '营业收入(元)', \n  `interest_income` double DEFAULT NULL COMMENT '利息收入(元)', \n  `premiums_earned` double DEFAULT NULL COMMENT '已赚保费(元)', \n  `commission_income` double DEFAULT NULL COMMENT '手续费及佣金收入(元)', \n  `total_operating_cost` double DEFAULT NULL COMMENT '营业总成本(元)', \n  `operating_cost` double DEFAULT NULL COMMENT '营业成本(元)', \n  `interest_expense` double DEFAULT NULL COMMENT '利息支出(元)', \n  `commission_expense` double DEFAULT NULL COMMENT '手续费及佣金支出(元)', \n  `refunded_premiums` double DEFAULT NULL COMMENT '退保金(元)', \n  `net_pay_insurance_claims` double DEFAULT NULL COMMENT '赔付支出净额(元)', \n  `withdraw_insurance_contract_reserve` double DEFAULT NULL COMMENT '提取保险合同准备金净额(元)', \n  `policy_dividend_payout` double DEFAULT NULL COMMENT '保单红利支出(元)', \n  `reinsurance_cost` double DEFAULT NULL COMMENT '分保费用(元)', \n  `operating_tax_surcharges` double DEFAULT NULL COMMENT '营业税金及附加(元)', \n  `sale_expense` double DEFAULT NULL COMMENT '销售费用(元)', \n  `administration_expense` double DEFAULT NULL COMMENT '管理费用(元)', \n  `financial_expense` double DEFAULT NULL COMMENT '财务费用(元)', \n  `asset_impairment_loss` double DEFAULT NULL COMMENT '资产减值损失(元)', \n  `fair_value_variable_income` double DEFAULT NULL COMMENT '公允价值变动收益(元)', \n  `investment_income` double DEFAULT NULL COMMENT '投资收益(元)', \n  `invest_income_associates` double DEFAULT NULL COMMENT '对联营企业和合营企业的投资收益(元)', \n  `exchange_income` double DEFAULT NULL COMMENT '汇兑收益(元)', \n  `operating_profit` double DEFAULT NULL COMMENT '营业利润(元)', \n  `non_operating_revenue` double DEFAULT NULL COMMENT '营业外收入(元)', \n  `non_operating_expense` double DEFAULT NULL COMMENT '营业外支出(元)', \n  `disposal_loss_non_current_liability` double DEFAULT NULL COMMENT '非流动资产处置净损失(元)', \n  `total_profit` double DEFAULT NULL COMMENT '利润总额(元)', \n  `income_tax_expense` double DEFAULT NULL COMMENT '所得税费用(元)', \n  `net_profit` double DEFAULT NULL COMMENT '净利润(元)', \n  `np_parent_company_owners` double DEFAULT NULL COMMENT '归属于母公司股东的净利润(元)', \n  `minority_profit` double DEFAULT NULL COMMENT '少数股东损益(元)', \n  `basic_eps` double DEFAULT NULL COMMENT '基本每股收益(元)', \n  `diluted_eps` double DEFAULT NULL COMMENT '稀释每股收益(元)', \n  `other_composite_income` double DEFAULT NULL COMMENT '其他综合收益(元)', \n  `total_composite_income` double DEFAULT NULL COMMENT '综合收益总额(元)', \n  `ci_parent_company_owners` double DEFAULT NULL COMMENT '归属于母公司所有者的综合收益总额(元)', \n  `ci_minority_owners` double DEFAULT NULL COMMENT '归属于少数股东的综合收益总额(元)'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "cashflow",
+    "desc": "现金流表，日更",
+    "type": "财务数据",
+    "ddl": "CREATE TABLE `cashflow`(\n  `code` string DEFAULT NULL COMMENT '股票代码', \n  `datetime` timestamp DEFAULT NULL COMMENT '发布财报时间', \n  `report_period` string DEFAULT NULL COMMENT '财报统计的季度的最后一天,', \n  `statement_type` string DEFAULT NULL COMMENT '报表类型(dummy)', \n  `goods_sale_and_service_render_cash` double DEFAULT NULL COMMENT '销售商品、提供劳务收到的现金(元)', \n  `net_deposit_increase` double DEFAULT NULL COMMENT '客户存款和同业存放款项净增加额(元)', \n  `net_borrowing_from_central_bank` double DEFAULT NULL COMMENT '向中央银行借款净增加额(元)', \n  `net_borrowing_from_finance_co` double DEFAULT NULL COMMENT '向其他金融机构拆入资金净增加额(元)', \n  `net_original_insurance_cash` double DEFAULT NULL COMMENT '收到原保险合同保费取得的现金(元)', \n  `net_cash_received_from_reinsurance_business` double DEFAULT NULL COMMENT '收到再保险业务现金净额(元)', \n  `net_insurer_deposit_investment` double DEFAULT NULL COMMENT '保户储金及投资款净增加额(元)', \n  `net_deal_trading_assets` double DEFAULT NULL COMMENT '处置交易性金融资产净增加额(元)',\n  `interest_and_commission_cashin` double DEFAULT NULL COMMENT '收取利息、手续费及佣金的现金(元)', \n  `net_increase_in_placements` double DEFAULT NULL COMMENT '拆入资金净增加额(元)', \n  `net_buyback` double DEFAULT NULL COMMENT '回购业务资金净增加额(元)', \n  `tax_levy_refund` double DEFAULT NULL COMMENT '收到的税费返还(元)', \n  `other_cashin_related_operate` double DEFAULT NULL COMMENT '收到其他与经营活动有关的现金(元)', \n  `subtotal_operate_cash_inflow` double DEFAULT NULL COMMENT '经营活动现金流入小计(元)', \n  `goods_and_services_cash_paid` double DEFAULT NULL COMMENT '购买商品、接受劳务支付的现金(元)', \n  `net_loan_and_advance_increase` double DEFAULT NULL COMMENT '客户贷款及垫款净增加额(元)', \n  `net_deposit_in_cb_and_ib` double DEFAULT NULL COMMENT '存放中央银行和同业款项净增加额(元)', \n  `original_compensation_paid` double DEFAULT NULL COMMENT '支付原保险合同赔付款项的现金(元)', \n  `handling_charges_and_commission` double DEFAULT NULL COMMENT '支付利息、手续费及佣金的现金(元)', \n  `policy_dividend_cash_paid` double DEFAULT NULL COMMENT '支付保单红利的现金(元)', \n  `staff_behalf_paid` double DEFAULT NULL COMMENT '支付给职工以及为职工支付的现金(元)', \n  `tax_payments` double DEFAULT NULL COMMENT '支付的各项税费(元)', \n  `other_operate_cash_paid` double DEFAULT NULL COMMENT '支付其他与经营活动有关的现金(元)', \n  `subtotal_operate_cash_outflow` double DEFAULT NULL COMMENT '经营活动现金流出小计(元)', \n  `net_operate_cash_flow` double DEFAULT NULL COMMENT '经营活动产生的现金流量净额(元)', \n  `invest_withdrawal_cash` double DEFAULT NULL COMMENT '收回投资收到的现金(元)', \n  `invest_proceeds` double DEFAULT NULL COMMENT '取得投资收益收到的现金(元)', \n  `fix_intan_other_asset_dispo_cash` double DEFAULT NULL COMMENT '处置固定资产、无形资产和其他长期资产收回的现金净额(元)', \n  `net_cash_deal_subcompany` double DEFAULT NULL COMMENT '处置子公司及其他营业单位收到的现金净额(元)', \n  `other_cash_from_invest_act` double DEFAULT NULL COMMENT '收到其他与投资活动有关的现金(元)', \n  `subtotal_invest_cash_inflow` double DEFAULT NULL COMMENT '投资活动现金流入小计(元)', \n  `fix_intan_other_asset_acqui_cash` double DEFAULT NULL COMMENT '购建固定资产、无形资产和其他长期资产支付的现金(元)', \n  `invest_cash_paid` double DEFAULT NULL COMMENT '投资支付的现金(元)', \n  `impawned_loan_net_increase` double DEFAULT NULL COMMENT '质押贷款净增加额(元)', \n  `net_cash_from_sub_company` double DEFAULT NULL COMMENT '取得子公司及其他营业单位支付的现金净额(元)', \n  `other_cash_to_invest_act` double DEFAULT NULL COMMENT '支付其他与投资活动有关的现金(元)', \n  `subtotal_invest_cash_outflow` double DEFAULT NULL COMMENT '投资活动现金流出小计(元)', \n  `net_invest_cash_flow` double DEFAULT NULL COMMENT '投资活动产生的现金流量净额(元)', \n  `cash_from_invest` double DEFAULT NULL COMMENT '吸收投资收到的现金(元)', \n  `cash_from_mino_s_invest_sub` double DEFAULT NULL COMMENT '子公司吸收少数股东投资收到的现金(元)', \n  `cash_from_borrowing` double DEFAULT NULL COMMENT '取得借款收到的现金(元)', \n  `cash_from_bonds_issue` double DEFAULT NULL COMMENT '发行债券收到的现金(元)', \n  `other_finance_act_cash` double DEFAULT NULL COMMENT '收到其他与筹资活动有关的现金(元)', \n  `subtotal_finance_cash_inflow` double DEFAULT NULL COMMENT '筹资活动现金流入小计(元)', \n  `borrowing_repayment` double DEFAULT NULL COMMENT '偿还债务支付的现金(元)', \n  `dividend_interest_payment` double DEFAULT NULL COMMENT '分配股利、利润或偿付利息支付的现金(元)', \n  `proceeds_from_sub_to_mino_s` double DEFAULT NULL COMMENT '子公司支付给少数股东的股利、利润(元)', \n  `other_finance_act_payment` double DEFAULT NULL COMMENT '支付其他与筹资活动有关的现金(元)', \n  `subtotal_finance_cash_outflow` double DEFAULT NULL COMMENT '筹资活动现金流出小计(元)', \n  `net_finance_cash_flow` double DEFAULT NULL COMMENT '筹资活动产生的现金流量净额(元)', \n  `exchange_rate_change_effect` double DEFAULT NULL COMMENT '汇率变动对现金及现金等价物的影响', \n  `cash_equivalent_increase` double DEFAULT NULL COMMENT '现金及现金等价物净增加额', \n  `cash_equivalents_at_beginning` double DEFAULT NULL COMMENT '期初现金及现金等价物余额(元)', \n  `cash_and_equivalents_at_end` double DEFAULT NULL COMMENT '期末现金及现金等价物余额(元)'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "dividend_allocation",
+    "desc": "分红配股，日更",
+    "type": "财务数据",
+    "ddl": "CREATE TABLE `dividend_allocation`(\n  `code` string DEFAULT NULL COMMENT '股票代码', \n  `datetime` timestamp DEFAULT NULL COMMENT '除权基准日期', \n  `company_name` string DEFAULT NULL COMMENT '机构名称', \n  `report_date` string DEFAULT NULL COMMENT '分红报告期', \n  `bonus_type` string DEFAULT NULL COMMENT '分红类型', \n  `board_plan_pub_date` string DEFAULT NULL COMMENT '董事会预案公告日期', \n  `board_plan_bonusnote` string DEFAULT NULL COMMENT '董事会预案分红说明', \n  `distributed_share_base_board` double DEFAULT NULL COMMENT '分配股本基数（董事会）（单位:万股）', \n  `shareholders_plan_pub_date` string DEFAULT NULL COMMENT 股东大会预案公告日期', \n  `shareholders_plan_bonusnote` string DEFAULT NULL COMMENT '股东大会预案分红说明', \n  `distributed_share_base_shareholders` double DEFAULT NULL COMMENT '分配股本基数（股东大会）（单位:万股）', \n  `implementation_pub_date` string DEFAULT NULL COMMENT '实施方案公告日期', \n  `implementation_bonusnote` string DEFAULT NULL COMMENT '实施方案分红说明', \n  `distributed_share_base_implement` double DEFAULT NULL COMMENT '分配股本基数（实施）（单位:万股）', \n  `dividend_ratio` double DEFAULT NULL COMMENT '送股比例', \n  `transfer_ratio` double DEFAULT NULL COMMENT '转增比例', \n  `bonus_ratio_rmb` double DEFAULT NULL COMMENT '派息比例（人民币）', \n  `bonus_ratio_usd` double DEFAULT NULL COMMENT '派息比例（美元）', \n  `bonus_ratio_hkd` double DEFAULT NULL COMMENT '派息比例（港币）', \n  `at_bonus_ratio_rmb` double DEFAULT NULL COMMENT '税后派息比例（人民币）', \n  `exchange_rate` double DEFAULT NULL COMMENT '汇率', \n  `dividend_number` double DEFAULT NULL COMMENT '送股数量单位：万股', \n  `transfer_number` double DEFAULT NULL COMMENT '转增数量单位：万股', \n  `bonus_amount_rmb` double DEFAULT NULL COMMENT '派息金额（人民币）单位：万元', \n  `a_registration_date` string DEFAULT NULL COMMENT 'A 股股权登记日', \n  `b_registration_date` string DEFAULT NULL COMMENT 'B 股股权登记日', \n  `a_xr_date` string DEFAULT NULL COMMENT 'A 股除权日', \n  `b_xr_baseday` string DEFAULT NULL COMMENT 'B 股除权基准日', \n  `b_final_trade_date` string DEFAULT NULL COMMENT 'B 股最后交易日', \n  `a_bonus_date` string DEFAULT NULL COMMENT '派息日（A）', \n  `b_bonus_date` string DEFAULT NULL COMMENT '派息日（B）', \n  `dividend_arrival_date` string DEFAULT NULL COMMENT '红股到账日', \n  `a_increment_listing_date` string DEFAULT NULL COMMENT 'A 股新增股份上市日', \n  `b_increment_listing_date` string DEFAULT NULL COMMENT 'B 股新增股份上市日', \n  `total_capital_before_transfer` double DEFAULT NULL COMMENT '送转前总股本单位：万股', \n  `total_capital_after_transfer` double DEFAULT NULL COMMENT '送转后总股本单位：万股', \n  `float_capital_before_transfer` double DEFAULT NULL COMMENT '送转前流通股本单位：万股', \n  `float_capital_after_transfer` double DEFAULT NULL COMMENT '送转后流通股本单位：万股', \n  `note` string DEFAULT NULL COMMENT '备注', \n  `a_transfer_arrival_date` string DEFAULT NULL COMMENT 'A 股转增股份到账日', \n  `b_transfer_arrival_date` string DEFAULT NULL COMMENT 'B 股转增股份到帐日', \n  `b_dividend_arrival_date` string DEFAULT NULL COMMENT 'B 股送红股到帐日', \n  `note_of_no_dividend` string DEFAULT NULL COMMENT '有关不分配的说明', \n  `plan_progress_code` int DEFAULT NULL COMMENT '方案进度编码', \n  `plan_progress` string DEFAULT NULL COMMENT '方案进度', \n  `bonus_cancel_pub_date` string DEFAULT NULL COMMENT '取消分红公告日期'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "shareholders_top10",
+    "desc": "十大股东信息，日更",
+    "type": "组合数据",
+    "ddl": "CREATE TABLE `shareholders_top10`(\n  `company_name` string DEFAULT NULL COMMENT '公司名称', \n  `code` string DEFAULT NULL COMMENT '股票代码', \n  `end_date` string DEFAULT NULL COMMENT '截止日期', \n  `change_reason_id` double DEFAULT NULL COMMENT '变动原因编码', \n  `change_reason` string DEFAULT NULL COMMENT '变动原因', \n  `shareholder_rank` double DEFAULT NULL COMMENT '股东名次', \n  `shareholder_name` string DEFAULT NULL COMMENT '股东名称', \n  `shareholder_name_en` string DEFAULT NULL COMMENT '股东名称（英文）', \n  `shareholder_id` double DEFAULT NULL COMMENT '股东 ID', \n  `shareholder_class_id` double DEFAULT NULL COMMENT '股东类别编码', \n  `shareholder_class` string DEFAULT NULL COMMENT '股东类别，包括:券商、社保基金、证券投资基金、保险公司、QFII、其它机构、个人等', \n  `share_number` double DEFAULT NULL COMMENT '持股数量', \n  `share_ratio` double DEFAULT NULL COMMENT '持股比例', \n  `sharesnature_id` double DEFAULT NULL COMMENT '股份性质编码', \n  `sharesnature` string DEFAULT NULL COMMENT '股份性质，包括:国家股、法人股、个人股外资股、流通 A 股、流通 B 股、职工股、发起人股、转配股等', \n  `share_pledge_freeze` double DEFAULT NULL COMMENT '股份质押冻结数量', \n  `share_pledge` double DEFAULT NULL COMMENT '股份质押数量', \n  `share_freeze` double DEFAULT NULL COMMENT '股份冻结数量', \n  `datetime` timestamp DEFAULT NULL COMMENT '公告日期'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "float_shareholders_top10",
+    "desc": "十大流通股东信息，日更",
+    "type": "组合数据",
+    "ddl": "CREATE TABLE `float_shareholders_top10`(\n  `company_name` string DEFAULT NULL COMMENT '公司名称', \n  `code` string DEFAULT NULL COMMENT '股票代码', \n  `end_date` string DEFAULT NULL COMMENT '截止日期', \n  `change_reason_id` double DEFAULT NULL COMMENT '变动原因编码', \n  `change_reason` string DEFAULT NULL COMMENT '变动原因', \n  `shareholder_rank` double DEFAULT NULL COMMENT '股东名次', \n  `shareholder_id` double DEFAULT NULL COMMENT '股东 ID', \n  `shareholder_name` string DEFAULT NULL COMMENT '股东名称', \n  `shareholder_name_en` string DEFAULT NULL COMMENT '股东名称（英文）', \n  `shareholder_class_id` double DEFAULT NULL COMMENT '股东类别编码', \n  `shareholder_class` string DEFAULT NULL COMMENT '股东类别', \n  `share_number` double DEFAULT NULL COMMENT '持股数量', \n  `share_ratio` double DEFAULT NULL COMMENT '持股比例', \n  `sharesnature_id` double DEFAULT NULL COMMENT '股份性质编码', \n  `sharesnature` string DEFAULT NULL COMMENT '股份性质', \n  `datetime` timestamp DEFAULT NULL COMMENT '公告日期'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "pledge_shares",
+    "desc": "股东股份质押，日更",
+    "type": "组合数据",
+    "ddl": "CREATE TABLE `pledge_shares`(\n  `company_name` string DEFAULT NULL COMMENT '公司名称', \n  `code` string DEFAULT NULL COMMENT '股票代码', \n  `pledgor_id` double DEFAULT NULL COMMENT '出质人 ID', \n  `pledgor` string DEFAULT NULL COMMENT '出质人', \n  `pledgee` string DEFAULT NULL COMMENT '质权人', \n  `pledge_item` string DEFAULT NULL COMMENT '质押事项质押原因，记录借款人、借款金额、币种等内容', \n  `pledge_nature_id` double DEFAULT NULL COMMENT '质押股份性质编码', \n  `pledge_nature` string DEFAULT NULL COMMENT '质押股份性质', \n  `pledge_number` double DEFAULT NULL COMMENT '质押数量', \n  `pledge_total_ratio` double DEFAULT NULL COMMENT '占总股本比例', \n  `start_date` string DEFAULT NULL COMMENT '质押起始日', \n  `end_date` string DEFAULT NULL COMMENT '质押终止日', \n  `unpledged_date` string DEFAULT NULL COMMENT '质押解除日', \n  `unpledged_number` double DEFAULT NULL COMMENT '质押解除数量', \n  `unpledged_detail` string DEFAULT NULL COMMENT '解除质押说明', \n  `is_buy_back` string DEFAULT NULL COMMENT '是否质押式回购交易', \n  `datetime` timestamp DEFAULT NULL COMMENT '公告日期'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "frozen_shares",
+    "desc": "股东股份冻结，日更",
+    "type": "组合数据",
+    "ddl": "CREATE TABLE `frozen_shares`(\n  `company_name` string DEFAULT NULL COMMENT '公司名称', \n  `code` string DEFAULT NULL COMMENT '股票代码', \n  `frozen_person_id` string DEFAULT NULL COMMENT '被冻结当事人 ID', \n  `frozen_person` string DEFAULT NULL COMMENT '被冻结当事人', \n  `frozen_reason` string DEFAULT NULL COMMENT '冻结事项', \n  `frozen_share_nature_id` double DEFAULT NULL COMMENT '被冻结股份性质编码', \n  `frozen_share_nature` string DEFAULT NULL COMMENT '被冻结股份性质，包括:国家股、法人股、个人股、外资股、流通 A 股、流通 B 股、职工股、发起人股、转配股', \n  `frozen_number` double DEFAULT NULL COMMENT '冻结数量', \n  `frozen_total_ratio` double DEFAULT NULL COMMENT '占总股份比例', \n  `freeze_applicant` string DEFAULT NULL COMMENT '冻结申请人', \n  `freeze_executor` string DEFAULT NULL COMMENT '冻结执行人', \n  `start_date` string DEFAULT NULL COMMENT '冻结起始日', \n  `end_date` string DEFAULT NULL COMMENT '冻结终止日', \n  `unfrozen_date` string DEFAULT NULL COMMENT '解冻日期', \n  `unfrozen_number` double DEFAULT NULL COMMENT '累计解冻数量', \n  `unfrozen_detail` string DEFAULT NULL COMMENT '解冻处理说明', \n  `datetime` timestamp DEFAULT NULL COMMENT '公告日期'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "shareholder_num",
+    "desc": "股东户数，日更",
+    "type": "组合数据",
+    "ddl": "CREATE TABLE `shareholder_num`(\n  `code` string DEFAULT NULL COMMENT '股票代码', \n  `end_date` string DEFAULT NULL COMMENT '截止日期', \n  `share_holders` double DEFAULT NULL COMMENT '股东总户数', \n  `a_share_holders` double DEFAULT NULL COMMENT 'A 股股东总户数', \n  `b_share_holders` double DEFAULT NULL COMMENT 'B 股股东总户数', \n  `h_share_holders` double DEFAULT NULL COMMENT 'H 股股东总户数', \n  `datetime` timestamp DEFAULT NULL COMMENT '公告日期'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "shareholder_change",
+    "desc": "大股东增减持，日更",
+    "type": "组合数据",
+    "ddl": "CREATE TABLE `shareholder_change`(\n  `company_name` string DEFAULT NULL COMMENT '公司名称', \n  `code` string DEFAULT NULL COMMENT '股票代码', \n  `end_date` string DEFAULT NULL COMMENT '增（减）持截止日', \n  `type` double DEFAULT NULL COMMENT '0--增持;1--减持', \n  `shareholder_id` double DEFAULT NULL COMMENT '股东 ID', \n  `shareholder_name` string DEFAULT NULL COMMENT '股东名称', \n  `change_number` double DEFAULT NULL COMMENT '变动数量', \n  `change_ratio` double DEFAULT NULL COMMENT '变动数量占总股本比例', \n  `price_ceiling` string DEFAULT NULL COMMENT '增（减）持价格上限', \n  `after_change_ratio` double DEFAULT NULL COMMENT '变动后占比%，变动后持股数量占总股本比例', \n  `datetime` timestamp DEFAULT NULL COMMENT '公告日期'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "limited_shares_list",
+    "desc": "受限股份上市公告日期，日更",
+    "type": "组合数据",
+    "ddl": "CREATE TABLE `limited_shares_list`(\n  `company_name` string DEFAULT NULL COMMENT '公司名称', \n  `code` string DEFAULT NULL COMMENT '股票代码', \n  `shareholder_name` string DEFAULT NULL COMMENT '股东名称', \n  `expected_unlimited_date` string DEFAULT NULL COMMENT '预计解除限售日期', \n  `expected_unlimited_number` double DEFAULT NULL COMMENT '预计解除限售数量', \n  `expected_unlimited_ratio` string DEFAULT NULL COMMENT '预计解除限售比例', \n  `actual_unlimited_date` string DEFAULT NULL COMMENT '实际解除限售日期', \n  `actual_unlimited_number` string DEFAULT NULL COMMENT '实际解除限售数量', \n  `actual_unlimited_ratio` string DEFAULT NULL COMMENT '实际解除限售比例', \n  `limited_reason_id` double DEFAULT NULL COMMENT '限售原因编码', \n  `limited_reason` string DEFAULT NULL COMMENT '限售原因', \n  `trade_condition` string DEFAULT NULL COMMENT '上市交易条件', \n  `datetime` timestamp DEFAULT NULL COMMENT '公告日期'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "limited_shares_unlimit",
+    "desc": "受限股份实际解禁日期，日更",
+    "type": "组合数据",
+    "ddl": "CREATE TABLE `limited_shares_unlimit`(\n  `company_name` string DEFAULT NULL COMMENT '公司名称', \n  `code` string DEFAULT NULL COMMENT '股票代码', \n  `shareholder_name` string DEFAULT NULL COMMENT '股东名称', \n  `actual_unlimited_date` string DEFAULT NULL COMMENT '实际解除限售日期', \n  `actual_unlimited_number` double DEFAULT NULL COMMENT '实际解除限售数量', \n  `actual_unlimited_ratio` double DEFAULT NULL COMMENT '本次解禁实际可流通比例', \n  `limited_reason_id` double DEFAULT NULL COMMENT '限售原因编码', \n  `limited_reason` string DEFAULT NULL COMMENT '限售原因', \n  `actual_trade_number` double DEFAULT NULL COMMENT '实际可流通数量', \n  `datetime` timestamp DEFAULT NULL COMMENT '公告日期'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "capital_change",
+    "desc": "股本变动，日更",
+    "type": "组合数据",
+    "ddl": "CREATE TABLE `capital_change`(\n  `company_name` string DEFAULT NULL COMMENT '公司名称', \n  `code` string DEFAULT NULL COMMENT '股票代码', \n  `change_date` string DEFAULT NULL COMMENT '变动日期', \n  `change_reason_id` double DEFAULT NULL COMMENT '变动原因编码', \n  `change_reason` string DEFAULT NULL COMMENT '变动原因', \n  `share_total` double DEFAULT NULL COMMENT '总股本(未流通股份+已流通股份，单位：万股)', \n  `share_non_trade` double DEFAULT NULL COMMENT '未流通股份(发起人股份 +募集法人股份 + 内部职工股 + 优先股+转配股+其他未流通股+配售法人股+已发行未上市股份)', \n  `share_start` double DEFAULT NULL COMMENT '发起人股份(万股)', \n  `share_nation` string DEFAULT NULL COMMENT '国家持股(万股)', \n  `share_nation_legal` string DEFAULT NULL COMMENT '国有法人持股(万股)', \n  `share_instate_legal` string DEFAULT NULL COMMENT '境内法人持股(万股)', \n  `share_outstate_legal` string DEFAULT NULL COMMENT '境外法人持股(万股)', \n  `share_natural` string DEFAULT NULL COMMENT '自然人持股(万股)', \n  `share_raised` string DEFAULT NULL COMMENT '募集法人股(万股)', \n  `share_inside` string DEFAULT NULL COMMENT '内部职工股(万股)', \n  `share_convert` string DEFAULT NULL COMMENT '转配股(万股)', \n  `share_perferred` string DEFAULT NULL COMMENT '优先股(万股)', \n  `share_other_nontrade` string DEFAULT NULL COMMENT '其他未流通股(万股)', \n  `share_limited` double DEFAULT NULL COMMENT '流通受限股份(万股)', \n  `share_legal_issue` double DEFAULT NULL COMMENT '配售法人股(万股)', \n  `share_strategic_investor` string DEFAULT NULL COMMENT '战略投资者持股(万股)', \n  `share_fund` string DEFAULT NULL COMMENT '证券投资基金持股(万股)', \n  `share_normal_legal` string DEFAULT NULL COMMENT '一般法人持股(万股)', \n  `share_other_limited` double DEFAULT NULL COMMENT '其他流通受限股份(万股)', \n  `share_nation_limited` string DEFAULT NULL COMMENT '国家持股（受限）(万股)', \n  `share_nation_legal_limited` double DEFAULT NULL COMMENT '国有法人持股（受限）(万股)', \n  `other_instate_limited` double DEFAULT NULL COMMENT '其他内资持股（受限）(万股)', \n  `legal_of_other_instate_limited` double DEFAULT NULL COMMENT '其他内资持股（受限）中的境内法人持股(万股)', \n  `natural_of_other_instate_limited` double DEFAULT NULL COMMENT '其他内资持股（受限）中的境内自然人持股(万股)', \n  `outstate_limited` double DEFAULT NULL COMMENT '外资持股（受限）(万股)', \n  `legal_of_outstate_limited` double DEFAULT NULL COMMENT '外资持股（受限）中的境外法人持股(万股)', \n  `natural_of_outstate_limited` double DEFAULT NULL COMMENT '外资持股（受限）境外自然人持股(万股)', \n  `share_trade_total` double DEFAULT NULL COMMENT '已流通股份(人民币普通股+ 境内上市外资股（B 股）+ 境外上市外资股（H 股）+高管股+ 其他流通股)(万股)', \n  `share_rmb` double DEFAULT NULL COMMENT '人民币普通股(万股)', \n  `share_b` double DEFAULT NULL COMMENT '境内上市外资股（B 股）(万股)', \n  `share_b_limited` double DEFAULT NULL COMMENT '限售 B 股(万股)', \n  `share_h` double DEFAULT NULL COMMENT '境外上市外资股（H 股）(万股)', \n  `share_h_limited` string DEFAULT NULL COMMENT '限售 H 股(万股)', \n  `share_management` string DEFAULT NULL COMMENT '高管股(万股)', \n  `share_management_limited` string DEFAULT NULL COMMENT '限售高管股(万股)', \n  `share_other_trade` string DEFAULT NULL COMMENT '其他流通股(万股)', \n  `control_shareholder_limited` string DEFAULT NULL COMMENT '控股股东、实际控制人(受限)(万股)', \n  `core_employee_limited` string DEFAULT NULL COMMENT '核心员工(受限)(万股)', \n  `individual_fund_limited` string DEFAULT NULL COMMENT '个人或基金(受限)(万股)', \n  `other_legal_limited` string DEFAULT NULL COMMENT '其他法人(受限)(万股)', \n  `other_limited` string DEFAULT NULL COMMENT '其他(受限)(万股)', \n  `datetime` timestamp DEFAULT NULL COMMENT '公告日期'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "index_code",
+    "desc": "指数基础数据",
+    "type": "组合数据",
+    "ddl": "CREATE TABLE `index_code`(\n  `code` string DEFAULT NULL COMMENT '代码', \n  `name` string DEFAULT NULL COMMENT '全称', \n  `short_name` string DEFAULT NULL COMMENT '简称', \n  `list_date` timestamp DEFAULT NULL COMMENT '上市时间', \n  `delist_date` timestamp DEFAULT NULL COMMENT '退市时间', \n  `type` string DEFAULT NULL COMMENT '类型'\n)\nROW FORMAT SERDE \n  'io.transwarp.timelyre.TimeLyreSerde' \nSTORED BY \n  'io.transwarp.timelyre.TimeLyreStorageHandler' \nWITH SERDEPROPERTIES ( \n  'serialization.format'='1')\nLOCATION\n  'hdfs://nameservice1/quark2/user/hive/warehouse/meta_data.db/admin/index_code'\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='list_date', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "index_bar_1day",
+    "desc": "指数日频K线行情",
+    "type": "行情数据",
+    "ddl": "CREATE TABLE `index_bar_1day`(\n  `code` string DEFAULT NULL COMMENT '股票代码', \n  `datetime` timestamp DEFAULT NULL COMMENT '记录时间', \n  `trade_day` string DEFAULT NULL COMMENT '交易日期', \n  `open` double DEFAULT NULL COMMENT '开盘价', \n  `high` double DEFAULT NULL COMMENT '最高价', \n  `low` double DEFAULT NULL COMMENT '最低价', \n  `close` double DEFAULT NULL COMMENT '收盘价', \n  `vwap` double DEFAULT NULL COMMENT '成交均价', \n  `turnover` double DEFAULT NULL COMMENT '成交额'\n)\nROW FORMAT SERDE \n  'io.transwarp.timelyre.TimeLyreSerde' \nSTORED BY \n  'io.transwarp.timelyre.TimeLyreStorageHandler' \nWITH SERDEPROPERTIES ( \n  'serialization.format'='1')\nLOCATION\n  'hdfs://nameservice1/quark2/user/hive/warehouse/meta_data.db/admin/index_bar_1day'\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "index_weights",
+    "desc": "指数日频成分股权重",
+    "type": "组合数据",
+    "ddl": "CREATE TABLE `index_weights`(\n  `code` string DEFAULT NULL COMMENT '股票代码', \n  `datetime` timestamp DEFAULT NULL COMMENT '时间戳', \n  `szzs` double DEFAULT NULL COMMENT '上证指数权重', \n  `sz50` double DEFAULT NULL COMMENT '上证 50 权重', \n  `sz180` double DEFAULT NULL COMMENT '上证 180 权重', \n  `hs300` double DEFAULT NULL COMMENT '上证 300 权重', \n  `kc50` double DEFAULT NULL COMMENT '科创 50 权重', \n  `szzz` double DEFAULT NULL COMMENT '深证综指权重', \n  `sz100` double DEFAULT NULL COMMENT '深证 100 权重', \n  `cybz` double DEFAULT NULL COMMENT '创业板指权重', \n  `zz500` double DEFAULT NULL COMMENT '中证 500 权重', \n  `zz1000` double DEFAULT NULL COMMENT '中证 1000 权重'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "conbond_code",
+    "desc": "债券基础数据",
+    "type": "组合数据",
+    "ddl": "CREATE TABLE `conbond_code`(\n  `code` string DEFAULT NULL COMMENT '代码', \n  `name` string DEFAULT NULL COMMENT '全称', \n  `short_name` string DEFAULT NULL COMMENT '简称', \n  `list_date` timestamp DEFAULT NULL COMMENT '上市时间', \n  `delist_date` timestamp DEFAULT NULL COMMENT '退市时间', \n  `type` string DEFAULT NULL COMMENT '类型'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='list_date', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "conbond_bar_5min",
+    "desc": "债券5分钟K线行情",
+    "type": "行情数据",
+    "ddl": "CREATE TABLE `conbond_bar_5min`(\n  `datetime` timestamp DEFAULT NULL COMMENT '记录时间', \n  `code` string DEFAULT NULL COMMENT '代码', \n  `open` double DEFAULT NULL COMMENT '开盘价', \n  `high` double DEFAULT NULL COMMENT '最高价', \n  `low` double DEFAULT NULL COMMENT '最低价', \n  `close` double DEFAULT NULL COMMENT '收盘价', \n  `volume` double DEFAULT NULL COMMENT '成交量', \n  `turnover` double DEFAULT NULL COMMENT '成交额', \n  `trade_day` string DEFAULT NULL COMMENT '交易日', \n  `limit_up` double DEFAULT NULL COMMENT '涨停价', \n  `limit_down` double DEFAULT NULL COMMENT '跌停价', \n  `vwap` double DEFAULT NULL COMMENT '成交量加权平均价', \n  `total_volume` double DEFAULT NULL COMMENT '总成交量', \n  `total_turnover` double DEFAULT NULL COMMENT '总成交额'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "conbond_bar_10min",
+    "desc": "债券10分钟K线行情",
+    "type": "行情数据",
+    "ddl": "CREATE TABLE `conbond_bar_10min`(\n  `datetime` timestamp DEFAULT NULL COMMENT '记录时间', \n  `code` string DEFAULT NULL COMMENT '代码', \n  `open` double DEFAULT NULL COMMENT '开盘价', \n  `high` double DEFAULT NULL COMMENT '最高价', \n  `low` double DEFAULT NULL COMMENT '最低价', \n  `close` double DEFAULT NULL COMMENT '收盘价', \n  `volume` double DEFAULT NULL COMMENT '成交量', \n  `turnover` double DEFAULT NULL COMMENT '成交额', \n  `trade_day` string DEFAULT NULL COMMENT '交易日', \n  `limit_up` double DEFAULT NULL COMMENT '涨停价', \n  `limit_down` double DEFAULT NULL COMMENT '跌停价', \n  `vwap` double DEFAULT NULL COMMENT '成交量加权平均价', \n  `total_volume` double DEFAULT NULL COMMENT '总成交量', \n  `total_turnover` double DEFAULT NULL COMMENT '总成交额'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "conbond_bar_30min",
+    "desc": "债券30分钟K线行情",
+    "type": "行情数据",
+    "ddl": "CREATE TABLE `conbond_bar_30min`(\n  `datetime` timestamp DEFAULT NULL COMMENT '记录时间', \n  `code` string DEFAULT NULL COMMENT '代码', \n  `open` double DEFAULT NULL COMMENT '开盘价', \n  `high` double DEFAULT NULL COMMENT '最高价', \n  `low` double DEFAULT NULL COMMENT '最低价', \n  `close` double DEFAULT NULL COMMENT '收盘价', \n  `volume` double DEFAULT NULL COMMENT '成交量', \n  `turnover` double DEFAULT NULL COMMENT '成交额', \n  `trade_day` string DEFAULT NULL COMMENT '交易日', \n  `limit_up` double DEFAULT NULL COMMENT '涨停价', \n  `limit_down` double DEFAULT NULL COMMENT '跌停价', \n  `vwap` double DEFAULT NULL COMMENT '成交量加权平均价', \n  `total_volume` double DEFAULT NULL COMMENT '总成交量', \n  `total_turnover` double DEFAULT NULL COMMENT '总成交额'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "conbond_bar_60min",
+    "desc": "债券60分钟K线行情",
+    "type": "行情数据",
+    "ddl": "CREATE TABLE `conbond_bar_60min`(\n  `datetime` timestamp DEFAULT NULL COMMENT '记录时间', \n  `code` string DEFAULT NULL COMMENT '代码', \n  `open` double DEFAULT NULL COMMENT '开盘价', \n  `high` double DEFAULT NULL COMMENT '最高价', \n  `low` double DEFAULT NULL COMMENT '最低价', \n  `close` double DEFAULT NULL COMMENT '收盘价', \n  `volume` double DEFAULT NULL COMMENT '成交量', \n  `turnover` double DEFAULT NULL COMMENT '成交额', \n  `trade_day` string DEFAULT NULL COMMENT '交易日', \n  `limit_up` double DEFAULT NULL COMMENT '涨停价', \n  `limit_down` double DEFAULT NULL COMMENT '跌停价', \n  `vwap` double DEFAULT NULL COMMENT '成交量加权平均价', \n  `total_volume` double DEFAULT NULL COMMENT '总成交量', \n  `total_turnover` double DEFAULT NULL COMMENT '总成交额'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "conbond_bar_1day",
+    "desc": "债券日频K线行情",
+    "type": "行情数据",
+    "ddl": "CREATE TABLE `meta_data.conbond_bar_1day`(\n  `datetime` timestamp DEFAULT NULL COMMENT '记录时间', \n  `code` string DEFAULT NULL COMMENT '代码', \n  `open` double DEFAULT NULL COMMENT '开盘价', \n  `high` double DEFAULT NULL COMMENT '最高价', \n  `low` double DEFAULT NULL COMMENT '最低价', \n  `close` double DEFAULT NULL COMMENT '收盘价', \n  `volume` double DEFAULT NULL COMMENT '成交量', \n  `turnover` double DEFAULT NULL COMMENT '成交额',\n  `vwap` double DEFAULT NULL COMMENT '成交量加权平均价', \n  `factor` double DEFAULT NULL COMMENT '复权因子', \n  `limit_up` double DEFAULT NULL COMMENT '涨停价', \n  `limit_down` double DEFAULT NULL COMMENT '跌停价', \n  `trade_day` string DEFAULT NULL COMMENT '交易日'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "future_code",
+    "desc": "期货基础数据",
+    "type": "组合数据",
+    "ddl": "CREATE TABLE `future_code`(\n  `code` string DEFAULT NULL COMMENT '合约代码', \n  `name` string DEFAULT NULL COMMENT '中文名称', \n  `short_name` string DEFAULT NULL COMMENT ' ', \n  `list_date` timestamp DEFAULT NULL COMMENT '上市日期', \n  `delist_date` timestamp DEFAULT NULL COMMENT '退市日期', \n  `type` string DEFAULT NULL COMMENT 'futures', \n  `market` string DEFAULT NULL COMMENT '所属交易所', \n  `is_main` double DEFAULT NULL COMMENT ' ', \n  `is_index` double DEFAULT NULL COMMENT ' '\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='list_date', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "future_bar_5min",
+    "desc": "期货5分钟K线行情",
+    "type": "行情数据",
+    "ddl": "CREATE TABLE `future_bar_5min`(\n  `code` string DEFAULT NULL COMMENT '合约代码', \n  `series` string DEFAULT NULL COMMENT ' ', \n  `datetime` timestamp DEFAULT NULL COMMENT '记录时间', \n  `trade_day` string DEFAULT NULL COMMENT '交易日', \n  `open` double DEFAULT NULL COMMENT '开盘价', \n  `high` double DEFAULT NULL COMMENT '最高价', \n  `low` double DEFAULT NULL COMMENT '最低价', \n  `close` double DEFAULT NULL COMMENT '收盘价', \n  `volume` int DEFAULT NULL COMMENT '成交量', \n  `turnover` double DEFAULT NULL COMMENT '成交额', \n  `vwap` double DEFAULT NULL COMMENT '成交量加权平均价', \n  `open_interest` int DEFAULT NULL COMMENT '持仓量', \n  `limit_up` double DEFAULT NULL COMMENT '涨停价', \n  `limit_down` double DEFAULT NULL COMMENT '跌停价', \n  `total_volume` int DEFAULT NULL COMMENT '总成交量', \n  `total_turnover` double DEFAULT NULL COMMENT '总成交额'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "future_bar_10min",
+    "desc": "期货10分钟K线行情",
+    "type": "行情数据",
+    "ddl": "CREATE TABLE `future_bar_10min`(\n  `code` string DEFAULT NULL COMMENT '合约代码', \n  `series` string DEFAULT NULL COMMENT ' ', \n  `datetime` timestamp DEFAULT NULL COMMENT '记录时间', \n  `trade_day` string DEFAULT NULL COMMENT '交易日', \n  `open` double DEFAULT NULL COMMENT '开盘价', \n  `high` double DEFAULT NULL COMMENT '最高价', \n  `low` double DEFAULT NULL COMMENT '最低价', \n  `close` double DEFAULT NULL COMMENT '收盘价', \n  `volume` int DEFAULT NULL COMMENT '成交量', \n  `turnover` double DEFAULT NULL COMMENT '成交额', \n  `vwap` double DEFAULT NULL COMMENT '成交量加权平均价', \n  `open_interest` int DEFAULT NULL COMMENT '持仓量', \n  `limit_up` double DEFAULT NULL COMMENT '涨停价', \n  `limit_down` double DEFAULT NULL COMMENT '跌停价', \n  `total_volume` int DEFAULT NULL COMMENT '总成交量', \n  `total_turnover` double DEFAULT NULL COMMENT '总成交额'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "future_bar_30min",
+    "desc": "期货30分钟K线行情",
+    "type": "行情数据",
+    "ddl": "CREATE TABLE `future_bar_30min`(\n  `code` string DEFAULT NULL COMMENT '合约代码', \n  `series` string DEFAULT NULL COMMENT ' ', \n  `datetime` timestamp DEFAULT NULL COMMENT '记录时间', \n  `trade_day` string DEFAULT NULL COMMENT '交易日', \n  `open` double DEFAULT NULL COMMENT '开盘价', \n  `high` double DEFAULT NULL COMMENT '最高价', \n  `low` double DEFAULT NULL COMMENT '最低价', \n  `close` double DEFAULT NULL COMMENT '收盘价', \n  `volume` int DEFAULT NULL COMMENT '成交量', \n  `turnover` double DEFAULT NULL COMMENT '成交额', \n  `vwap` double DEFAULT NULL COMMENT '成交量加权平均价', \n  `open_interest` int DEFAULT NULL COMMENT '持仓量', \n  `limit_up` double DEFAULT NULL COMMENT '涨停价', \n  `limit_down` double DEFAULT NULL COMMENT '跌停价', \n  `total_volume` int DEFAULT NULL COMMENT '总成交量', \n  `total_turnover` double DEFAULT NULL COMMENT '总成交额'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "future_bar_60min",
+    "desc": "期货60分钟K线行情",
+    "type": "行情数据",
+    "ddl": "CREATE TABLE `future_bar_60min`(\n  `code` string DEFAULT NULL COMMENT '合约代码', \n  `series` string DEFAULT NULL COMMENT ' ', \n  `datetime` timestamp DEFAULT NULL COMMENT '记录时间', \n  `trade_day` string DEFAULT NULL COMMENT '交易日', \n  `open` double DEFAULT NULL COMMENT '开盘价', \n  `high` double DEFAULT NULL COMMENT '最高价', \n  `low` double DEFAULT NULL COMMENT '最低价', \n  `close` double DEFAULT NULL COMMENT '收盘价', \n  `volume` int DEFAULT NULL COMMENT '成交量', \n  `turnover` double DEFAULT NULL COMMENT '成交额', \n  `vwap` double DEFAULT NULL COMMENT '成交量加权平均价', \n  `open_interest` int DEFAULT NULL COMMENT '持仓量', \n  `limit_up` double DEFAULT NULL COMMENT '涨停价', \n  `limit_down` double DEFAULT NULL COMMENT '跌停价', \n  `total_volume` int DEFAULT NULL COMMENT '总成交量', \n  `total_turnover` double DEFAULT NULL COMMENT '总成交额'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "future_bar_1day",
+    "desc": "期货日频K线行情",
+    "type": "行情数据",
+    "ddl": "CREATE TABLE `future_bar_1day`(\n  `code` string DEFAULT NULL COMMENT '合约代码', \n  `series` string DEFAULT NULL COMMENT ' ', \n  `datetime` timestamp DEFAULT NULL COMMENT '记录时间', \n  `trade_day` string DEFAULT NULL COMMENT '交易日', \n  `open` double DEFAULT NULL COMMENT '开盘价', \n  `high` double DEFAULT NULL COMMENT '最高价', \n  `low` double DEFAULT NULL COMMENT '最低价', \n  `close` double DEFAULT NULL COMMENT '收盘价', \n  `volume` double DEFAULT NULL COMMENT '成交量', \n  `turnover` double DEFAULT NULL COMMENT '成交额', \n  `vwap` double DEFAULT NULL COMMENT '成交量加权平均价', \n  `open_interest` double DEFAULT NULL COMMENT '持仓量', \n  `settle` double DEFAULT NULL COMMENT '结算价', \n  `multiplier` double DEFAULT NULL COMMENT ' ', \n  `limit_up` double DEFAULT NULL COMMENT '涨停价', \n  `limit_down` double DEFAULT NULL COMMENT '跌停价'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "fund_code",
+    "desc": "基金基础数据",
+    "type": "组合数据",
+    "ddl": "CREATE TABLE `fund_code`(\n  `code` string DEFAULT NULL COMMENT '基金代码', \n  `name` string DEFAULT NULL COMMENT '全称', \n  `short_name` string DEFAULT NULL COMMENT '简称', \n  `list_date` timestamp DEFAULT NULL COMMENT '上市时间', \n  `delist_date` timestamp DEFAULT NULL COMMENT '退市时间', \n  `type` string DEFAULT NULL COMMENT '基金类型'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='list_date', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "fund_bar_5min",
+    "desc": "基金5分钟K线频率",
+    "type": "行情数据",
+    "ddl": "CREATE TABLE `fund_bar_5min`(\n  `code` string DEFAULT NULL COMMENT '基金代码', \n  `datetime` timestamp DEFAULT NULL COMMENT '记录时间', \n  `trade_day` string DEFAULT NULL COMMENT '交易日', \n  `open` double DEFAULT NULL COMMENT '开盘价', \n  `high` double DEFAULT NULL COMMENT '最高价', \n  `low` double DEFAULT NULL COMMENT '最低价', \n  `close` double DEFAULT NULL COMMENT '收盘价', \n  `volume` bigint DEFAULT NULL COMMENT '成交量', \n  `turnover` double DEFAULT NULL COMMENT '成交额', \n  `vwap` double DEFAULT NULL COMMENT '成交量加权平均价', \n  `limit_up` double DEFAULT NULL COMMENT '涨停价', \n  `limit_down` double DEFAULT NULL COMMENT '跌停价', \n  `total_volume` bigint DEFAULT NULL COMMENT '总成交量', \n  `total_turnover` double DEFAULT NULL COMMENT '总成交额'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "fund_bar_10min",
+    "desc": "基金10分钟K线频率",
+    "type": "行情数据",
+    "ddl": "CREATE TABLE `fund_bar_10min`(\n  `code` string DEFAULT NULL COMMENT '基金代码', \n  `datetime` timestamp DEFAULT NULL COMMENT '记录时间', \n  `trade_day` string DEFAULT NULL COMMENT '交易日', \n  `open` double DEFAULT NULL COMMENT '开盘价', \n  `high` double DEFAULT NULL COMMENT '最高价', \n  `low` double DEFAULT NULL COMMENT '最低价', \n  `close` double DEFAULT NULL COMMENT '收盘价', \n  `volume` bigint DEFAULT NULL COMMENT '成交量', \n  `turnover` double DEFAULT NULL COMMENT '成交额', \n  `vwap` double DEFAULT NULL COMMENT '成交量加权平均价', \n  `limit_up` double DEFAULT NULL COMMENT '涨停价', \n  `limit_down` double DEFAULT NULL COMMENT '跌停价', \n  `total_volume` bigint DEFAULT NULL COMMENT '总成交量', \n  `total_turnover` double DEFAULT NULL COMMENT '总成交额'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "fund_bar_30min",
+    "desc": "基金30分钟K线频率",
+    "type": "行情数据",
+    "ddl": "CREATE TABLE `fund_bar_30min`(\n  `code` string DEFAULT NULL COMMENT '基金代码', \n  `datetime` timestamp DEFAULT NULL COMMENT '记录时间', \n  `trade_day` string DEFAULT NULL COMMENT '交易日', \n  `open` double DEFAULT NULL COMMENT '开盘价', \n  `high` double DEFAULT NULL COMMENT '最高价', \n  `low` double DEFAULT NULL COMMENT '最低价', \n  `close` double DEFAULT NULL COMMENT '收盘价', \n  `volume` bigint DEFAULT NULL COMMENT '成交量', \n  `turnover` double DEFAULT NULL COMMENT '成交额', \n  `vwap` double DEFAULT NULL COMMENT '成交量加权平均价', \n  `limit_up` double DEFAULT NULL COMMENT '涨停价', \n  `limit_down` double DEFAULT NULL COMMENT '跌停价', \n  `total_volume` bigint DEFAULT NULL COMMENT '总成交量', \n  `total_turnover` double DEFAULT NULL COMMENT '总成交额'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "fund_bar_60min",
+    "desc": "基金60分钟K线频率",
+    "type": "行情数据",
+    "ddl": "CREATE TABLE `fund_bar_60min`(\n  `code` string DEFAULT NULL COMMENT '基金代码', \n  `datetime` timestamp DEFAULT NULL COMMENT '记录时间', \n  `trade_day` string DEFAULT NULL COMMENT '交易日', \n  `open` double DEFAULT NULL COMMENT '开盘价', \n  `high` double DEFAULT NULL COMMENT '最高价', \n  `low` double DEFAULT NULL COMMENT '最低价', \n  `close` double DEFAULT NULL COMMENT '收盘价', \n  `volume` bigint DEFAULT NULL COMMENT '成交量', \n  `turnover` double DEFAULT NULL COMMENT '成交额', \n  `vwap` double DEFAULT NULL COMMENT '成交量加权平均价', \n  `limit_up` double DEFAULT NULL COMMENT '涨停价', \n  `limit_down` double DEFAULT NULL COMMENT '跌停价', \n  `total_volume` bigint DEFAULT NULL COMMENT '总成交量', \n  `total_turnover` double DEFAULT NULL COMMENT '总成交额'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "fund_bar_1day",
+    "desc": "基金日频K线频率",
+    "type": "行情数据",
+    "ddl": "CREATE TABLE `fund_bar_1day`(\n  `code` string DEFAULT NULL COMMENT '基金代码', \n  `datetime` timestamp DEFAULT NULL COMMENT '记录时间', \n  `trade_day` string DEFAULT NULL COMMENT '交易日', \n  `open` double DEFAULT NULL COMMENT '开盘价', \n  `high` double DEFAULT NULL COMMENT '最高价', \n  `low` double DEFAULT NULL COMMENT '最低价', \n  `close` double DEFAULT NULL COMMENT '收盘价', \n  `volume` bigint DEFAULT NULL COMMENT '成交量', \n  `turnover` double DEFAULT NULL COMMENT '成交额', \n  `vwap` double DEFAULT NULL COMMENT '成交量加权平均价', \n  `factor` double DEFAULT NULL COMMENT '复权因子', \n  `limit_up` double DEFAULT NULL COMMENT '涨停价', \n  `limit_down` double DEFAULT NULL COMMENT '跌停价'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
+  },
+  {
+    "schema": "quark2",
+    "db": "meta_data",
+    "table": "trade_calendar_pg",
+    "desc": "交易日历",
+    "type": "基础数据",
+    "ddl": "CREATE TABLE `trade_calendar_pg`(\n  `trade_date` string DEFAULT NULL COMMENT '交易日期', \n  `exchange` string DEFAULT NULL COMMENT '交易市场', \n  `pretrade_date` string DEFAULT NULL COMMENT '前一交易日'\n)"
+  }
+]

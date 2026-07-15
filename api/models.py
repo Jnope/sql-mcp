@@ -11,6 +11,7 @@ class TableSchemaIn(BaseModel):
     desc: str = ""
     type: str = ""
     types: list[str] = []
+    ddl: str = ""
 
     @field_validator("schema_name", "db", "table_name")
     @classmethod
@@ -27,6 +28,7 @@ class TableSchemaUpdate(BaseModel):
     desc: Optional[str] = None
     type: Optional[str] = None
     types: Optional[list[str]] = None
+    ddl: Optional[str] = None
 
 
 class BatchSyncIn(BaseModel):
@@ -38,5 +40,7 @@ class VectorOut(BaseModel):
     db: str
     table_name: str
     doc: str = ""
+    desc: str = ""
+    ddl: str = ""
     types: list[str] = []
     distance: Optional[float] = None

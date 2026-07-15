@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS table_embeddings (
     db               TEXT NOT NULL,
     table_name       TEXT NOT NULL,
     doc              TEXT NOT NULL DEFAULT '',
+    "desc"             TEXT NOT NULL DEFAULT '',
+    ddl              TEXT NOT NULL DEFAULT '',
     types            TEXT[] NOT NULL DEFAULT '{}',
     embedding        vector(1024),
 
@@ -18,8 +20,19 @@ CREATE INDEX IF NOT EXISTS idx_te_embedding
 CREATE INDEX IF NOT EXISTS idx_te_schema_db
     ON table_embeddings (schema_name, db);
 
+-- 兼容已存在的表：新增 ddl 列
+ALTER TABLE table_embeddings ADD COLUMN IF NOT EXISTS ddl TEXT NOT NULL DEFAULT '';
+ALTER TABLE table_embeddings ADD COLUMN IF NOT EXISTS "desc" TEXT NOT NULL DEFAULT '';
+
 CREATE TABLE IF NOT EXISTS sync_log (
     id          SERIAL PRIMARY KEY,
     sync_time   TIMESTAMPTZ DEFAULT now(),
-    total_count INT NOT NULL DEFAULT 0
+    total_count INT NOT NULL DEFAULT 0,
+    status      TEXT DEFAULT 'running'
+);
+
+-- 定时任务互斥锁
+CREATE TABLE IF NOT EXISTS sync_lock (
+    lock_key    TEXT PRIMARY KEY,
+    locked_at   TIMESTAMPTZ DEFAULT now()
 );
