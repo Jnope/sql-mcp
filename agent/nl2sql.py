@@ -39,6 +39,7 @@ SYSTEM_PROMPT = f"""你是SQL专家，根据输入生成SQL语句。
 - 查询语句默认 LIMIT 100
 - 只输出SQL，不要包含任何解释文字，不要用markdown代码块包裹SQL
 - 生成SQL中表格式为db_name.table_name
+- alias 重命名时不要使用中文
 """
 
 def _format_schemas_for_prompt(schemas: list[dict]) -> str:

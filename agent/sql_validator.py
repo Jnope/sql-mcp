@@ -80,3 +80,33 @@ def is_select_sql(sql: str) -> bool:
     if ast is None:
         return False
     return isinstance(ast, (exp.Select, exp.With))
+
+
+def extract_column_names(sql: str) -> list[str]:
+    sql = sql.strip().rstrip(";")
+    statements = sqlglot.parse(sql, read=DIALECT)
+    if not statements:
+        return []
+    ast = statements[0]
+    if ast is None:
+        return []
+
+    select_node = ast
+    if isinstance(ast, exp.With):
+        select_node = ast.this
+
+    if not isinstance(select_node, exp.Select):
+        return []
+
+    columns = []
+    for proj in select_node.expressions:
+        if isinstance(proj, exp.Alias):
+            columns.append(proj.alias_or_name)
+        elif isinstance(proj, exp.Star):
+            return []
+        else:
+            if isinstance(proj, exp.Column):
+                columns.append(proj.name)
+            else:
+                columns.append(proj.alias_or_name or str(proj))
+    return columns

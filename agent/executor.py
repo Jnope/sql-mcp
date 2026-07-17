@@ -1,55 +1,14 @@
 import os
-import json
-import signal
 import logging
 import pandas as pd
-import numpy as np
 from transwarp.timelyre import DatabaseConn
-from .sql_validator import validate_readonly
 from .config import (
     TIMELYRE_LOGIN_TIMEOUT, TIMELYRE_PROXY, TIMELYRE_CONN, TIMELYRE_DEFAULT_DB,
     TIMELYRE_SESSION_TIMEOUT, TIMELYRE_USER, TIMELYRE_PASSWORD, TIMELYRE_TOKEN,
-    PYTHON_TIMEOUT,
 )
+from .sql_validator import extract_column_names
 
 logger = logging.getLogger(__name__)
-
-SAFE_BUILTINS = {
-    "abs": abs,
-    "all": all,
-    "any": any,
-    "bool": bool,
-    "dict": dict,
-    "enumerate": enumerate,
-    "filter": filter,
-    "float": float,
-    "int": int,
-    "len": len,
-    "list": list,
-    "map": map,
-    "max": max,
-    "min": min,
-    "print": print,
-    "range": range,
-    "round": round,
-    "set": set,
-    "sorted": sorted,
-    "str": str,
-    "sum": sum,
-    "tuple": tuple,
-    "type": type,
-    "zip": zip,
-    "isinstance": isinstance,
-    "json": json,
-}
-
-
-class _TimeoutError(Exception):
-    pass
-
-
-def _timeout_handler(signum, frame):
-    raise _TimeoutError(f"Python execution exceeded {PYTHON_TIMEOUT}s")
 
 
 class Executor:
@@ -119,66 +78,29 @@ class Executor:
         logger.info("Executing SQL on %s.%s: %s", schema_name, db or TIMELYRE_DEFAULT_DB, sql)
 
         conn = self.db_conn(schema_name, db)
-        df = conn.query_raw_data(sql=sql)
+        data = conn.query_raw_data(sql=sql)
 
-        if df is None:
+        if data is None:
             return {"columns": [], "rows": [], "rowCount": 0}
 
-        if isinstance(df, pd.DataFrame):
-            return self._df_to_result(df)
+        if isinstance(data, pd.DataFrame):
+            return self._df_to_result(data)
 
-        if isinstance(df, list):
-            if len(df) == 0:
+        if isinstance(data, list):
+            if len(data) == 0:
                 return {"columns": [], "rows": [], "rowCount": 0}
-            first = df[0]
+            first = data[0]
             if isinstance(first, dict):
                 columns = list(first.keys())
-                rows = [[row.get(c) for c in columns] for row in df]
+                rows = [[row.get(c) for c in columns] for row in data]
                 return {"columns": columns, "rows": rows, "rowCount": len(rows)}
-            return {"columns": [f"col_{i}" for i in range(len(first))], "rows": df, "rowCount": len(df)}
 
-        return {"columns": ["result"], "rows": [[str(df)]], "rowCount": 1}
+            columns = extract_column_names(sql)
+            if not columns or len(columns) != len(first):
+                columns = [f"col_{i}" for i in range(len(first))]
+            return {"columns": columns, "rows": data, "rowCount": len(data)}
 
-    def execute_python(self, code: str, data: str | None = None) -> dict:
-        local_vars: dict = {}
-        if data:
-            parsed = json.loads(data)
-            local_vars["df"] = pd.DataFrame(parsed.get("rows", []), columns=parsed.get("columns"))
-
-        exec_globals = {
-            "pd": pd,
-            "np": np,
-            "json": json,
-            "__builtins__": SAFE_BUILTINS,
-        }
-
-        old_handler = signal.signal(signal.SIGALRM, _timeout_handler)
-        signal.alarm(PYTHON_TIMEOUT)
-        try:
-            exec(code, exec_globals, local_vars)
-        except _TimeoutError:
-            raise ValueError(f"Python执行超时({PYTHON_TIMEOUT}秒)")
-        finally:
-            signal.alarm(0)
-            signal.signal(signal.SIGALRM, old_handler)
-
-        result = local_vars.get("result")
-        if result is None:
-            for key in ("df", "result_df"):
-                if key in local_vars and isinstance(local_vars[key], pd.DataFrame):
-                    result = local_vars[key]
-                    break
-
-        if isinstance(result, pd.DataFrame):
-            return self._df_to_result(result)
-
-        if isinstance(result, (list, dict)):
-            return {"value": json.dumps(result, ensure_ascii=False, default=str)}
-
-        if isinstance(result, (int, float, str, bool)):
-            return {"value": str(result)}
-
-        return {"value": str(result) if result is not None else ""}
+        return {"columns": ["result"], "rows": [[str(data)]], "rowCount": 1}
 
     def get_table_ddl(self, schema_name: str, db: str | None, table_name: str) -> str:
         db = db or TIMELYRE_DEFAULT_DB

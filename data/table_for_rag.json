@@ -3,7 +3,7 @@
     "schema": "quark2",
     "db": "meta_data",
     "table": "stock_code",
-    "desc": "A股股票基础信息",
+    "desc": "A股股票基础信息，用于获取股票代码、股票名称和公司名称等信息",
     "type": "组合数据",
     "ddl": "CREATE TABLE `stock_code`(\n  `id` int DEFAULT NULL COMMENT ' ',\n  `code` string DEFAULT NULL COMMENT '标的代码，如000004.SZ',\n  `name` string DEFAULT NULL COMMENT '股票名称，如国华退',\n  `short_name` string DEFAULT NULL COMMENT '缩略名，如GHT',\n  `category` string DEFAULT NULL COMMENT '股种：A，B',\n  `exchange` string DEFAULT NULL COMMENT '交易所：SH上交所、SZ深交所',\n  `start_date` string DEFAULT NULL COMMENT '上市日期，如1990-12-01',\n  `end_date` string DEFAULT NULL COMMENT '退市日期，如2026-07-14或-',\n  `company_id` int DEFAULT NULL COMMENT '公司id，如430000004',\n  `company_name` string DEFAULT NULL COMMENT '公司全称，如深圳国华网安科技股份有限公司',\n  `ipo_shares` double DEFAULT NULL COMMENT '初始上市股数',\n  `book_price` double DEFAULT NULL COMMENT '发行价格，元',\n  `par_value` double DEFAULT NULL COMMENT '面值，元',\n  `state_id` int DEFAULT NULL COMMENT '上市状态id：301001 至 301006',\n  `state` string DEFAULT NULL COMMENT '上市状态：终止上市，正常上市，ST，*ST，进入退市整理期',\n  `type` string DEFAULT NULL COMMENT '类型：stock',\n  `fake_datetime` timestamp DEFAULT NULL COMMENT '伪时间戳，统一：1990-01-01 00:00:00，用于覆写'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='fake_datetime', \n  'timelyre.tag.cols'='code'\n)"
   },
@@ -11,7 +11,7 @@
     "schema": "quark2",
     "db": "meta_data",
     "table": "sw_industry",
-    "desc": "申万行业分类",
+    "desc": "申万行业分类，用于获取股票的行业分类",
     "type": "组合数据",
     "ddl": "CREATE TABLE `sw_industry`(\n  `code` string DEFAULT NULL COMMENT '股票代码',\n  `datetime` timestamp DEFAULT NULL COMMENT '记录时间',\n  `sw_l1_code` string DEFAULT NULL COMMENT '申万一级行业代码',\n  `sw_l1_name` string DEFAULT NULL COMMENT '申万一级行业名称',\n  `sw_l2_code` string DEFAULT NULL COMMENT '申万二级行业代码',\n  `sw_l2_name` string DEFAULT NULL COMMENT '申万二级行业名称',\n  `sw_l3_code` string DEFAULT NULL COMMENT '申万三级行业代码',\n  `sw_l3_name` string DEFAULT NULL COMMENT '申万三级行业名称'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
   },
@@ -123,9 +123,9 @@
     "schema": "quark2",
     "db": "meta_data",
     "table": "income",
-    "desc": "收入表，日更",
+    "desc": "收入表，日更，公司每季度发表一次，也可能不发季度财报",
     "type": "财务数据",
-    "ddl": ""
+    "ddl": "CREATE TABLE `income`(\n  `code` string DEFAULT NULL COMMENT '股票代码', \n  `datetime` timestamp DEFAULT NULL COMMENT '发布财报日期', \n  `report_period` string DEFAULT NULL COMMENT '财报统计的季度的最后一天，如2026-03-31，可能存在数据缺失', \n  `statement_type` double DEFAULT NULL COMMENT '报表类型(dummy)', \n  `total_operating_revenue` double DEFAULT NULL COMMENT '营业总收入(元)', \n  `operating_revenue` double DEFAULT NULL COMMENT '营业收入(元)', \n  `interest_income` double DEFAULT NULL COMMENT '利息收入(元)', \n  `premiums_earned` double DEFAULT NULL COMMENT '已赚保费(元)', \n  `commission_income` double DEFAULT NULL COMMENT '手续费及佣金收入(元)', \n  `total_operating_cost` double DEFAULT NULL COMMENT '营业总成本(元)', \n  `operating_cost` double DEFAULT NULL COMMENT '营业成本(元)', \n  `interest_expense` double DEFAULT NULL COMMENT '利息支出(元)', \n  `commission_expense` double DEFAULT NULL COMMENT '手续费及佣金支出(元)', \n  `refunded_premiums` double DEFAULT NULL COMMENT '退保金(元)', \n  `net_pay_insurance_claims` double DEFAULT NULL COMMENT '赔付支出净额(元)', \n  `withdraw_insurance_contract_reserve` double DEFAULT NULL COMMENT '提取保险合同准备金净额(元)', \n  `policy_dividend_payout` double DEFAULT NULL COMMENT '保单红利支出(元)', \n  `reinsurance_cost` double DEFAULT NULL COMMENT '分保费用(元)', \n  `operating_tax_surcharges` double DEFAULT NULL COMMENT '营业税金及附加(元)', \n  `sale_expense` double DEFAULT NULL COMMENT '销售费用(元)', \n  `administration_expense` double DEFAULT NULL COMMENT '管理费用(元)', \n  `financial_expense` double DEFAULT NULL COMMENT '财务费用(元)', \n  `asset_impairment_loss` double DEFAULT NULL COMMENT '资产减值损失(元)', \n  `fair_value_variable_income` double DEFAULT NULL COMMENT '公允价值变动收益(元)', \n  `investment_income` double DEFAULT NULL COMMENT '投资收益(元)', \n  `invest_income_associates` double DEFAULT NULL COMMENT '对联营企业和合营企业的投资收益(元)', \n  `exchange_income` double DEFAULT NULL COMMENT '汇兑收益(元)', \n  `operating_profit` double DEFAULT NULL COMMENT '营业利润(元)', \n  `non_operating_revenue` double DEFAULT NULL COMMENT '营业外收入(元)', \n  `non_operating_expense` double DEFAULT NULL COMMENT '营业外支出(元)', \n  `disposal_loss_non_current_liability` double DEFAULT NULL COMMENT '非流动资产处置净损失(元)', \n  `total_profit` double DEFAULT NULL COMMENT '利润总额(元)', \n  `income_tax_expense` double DEFAULT NULL COMMENT '所得税费用(元)', \n  `net_profit` double DEFAULT NULL COMMENT '净利润(元)', \n  `np_parent_company_owners` double DEFAULT NULL COMMENT '归属于母公司股东的净利润(元)', \n  `minority_profit` double DEFAULT NULL COMMENT '少数股东损益(元)', \n  `basic_eps` double DEFAULT NULL COMMENT '基本每股收益(元)', \n  `diluted_eps` double DEFAULT NULL COMMENT '稀释每股收益(元)', \n  `other_composite_income` double DEFAULT NULL COMMENT '其他综合收益(元)', \n  `total_composite_income` double DEFAULT NULL COMMENT '综合收益总额(元)', \n  `ci_parent_company_owners` double DEFAULT NULL COMMENT '归属于母公司所有者的综合收益总额(元)', \n  `ci_minority_owners` double DEFAULT NULL COMMENT '归属于少数股东的综合收益总额(元)'\n)\nTBLPROPERTIES (\n  'timelyre.timestamp.col'='datetime', \n  'timelyre.tag.cols'='code'\n)"
   },
   {
     "schema": "quark2",
