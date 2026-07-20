@@ -35,3 +35,5 @@ TIMELYRE_LOGIN_TIMEOUT = int(os.environ.get("TIMELYRE_LOGIN_TIMEOUT", "15000"))
 MAX_RETURN_ROWS = int(os.environ.get("MAX_RETURN_ROWS", "100"))
 MAX_CHART_ROWS = int(os.environ.get("MAX_CHART_ROWS", "10000"))
 AVAILABLE_SCHEMAS = os.environ.get("AVAILABLE_SCHEMAS", "")
+
+CLOSE_ENV = os.getenv("MCP_CLOSE_PROXY", "false")

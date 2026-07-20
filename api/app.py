@@ -7,6 +7,8 @@ from fastapi import FastAPI
 from agent.utils.log_util import setup_admin_logging
 from api.routes import router
 from api.sync_task import start_sync_task, stop_sync_task
+from common.config import CLOSE_ENV
+from common.env_utils import remove_proxy
 
 setup_admin_logging()
 logger = logging.getLogger("sql-agent-api")
@@ -44,6 +46,9 @@ async def health():
 
 
 def main():
+    if CLOSE_ENV == "true":
+        remove_proxy()
+
     import uvicorn
 
     uvicorn.run(

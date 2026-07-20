@@ -2,7 +2,7 @@ import os
 import logging
 import pandas as pd
 from transwarp.timelyre import DatabaseConn
-from .config import (
+from common.config import (
     TIMELYRE_LOGIN_TIMEOUT, TIMELYRE_PROXY, TIMELYRE_CONN, TIMELYRE_DEFAULT_DB,
     TIMELYRE_SESSION_TIMEOUT, TIMELYRE_USER, TIMELYRE_PASSWORD, TIMELYRE_TOKEN,
 )

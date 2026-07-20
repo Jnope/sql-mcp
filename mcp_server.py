@@ -1,8 +1,6 @@
 import json
 import logging
 import os
-import sys
-import uuid
 
 import sqlglot
 from fastmcp import FastMCP
@@ -13,14 +11,16 @@ from agent.nl2sql import generate_sql, explain_result
 from agent.sql_validator import validate_readonly, is_select_sql
 from agent.executor import Executor
 from agent.chart_generator import generate_chart
-from agent.config import LLM_BASE_URL, LLM_API_KEY, LLM_MODEL, RETRIEVE_TOP_N, MAX_RETURN_ROWS, MAX_CHART_ROWS, AVAILABLE_SCHEMAS
+from common.config import CLOSE_ENV, LLM_BASE_URL, LLM_API_KEY, LLM_MODEL, RETRIEVE_TOP_N, MAX_RETURN_ROWS, MAX_CHART_ROWS, AVAILABLE_SCHEMAS
 from agent.utils.log_util import setup_logging
 from openai import AsyncOpenAI
+
+from common.env_utils import remove_proxy
 
 setup_logging()
 logger = logging.getLogger("sql-agent")
 
-mcp = FastMCP("sql-agent")
+mcp = FastMCP(name="sql-tool", instructions="量化投研数据库Timelyre SQL 生成、执行和绘图工具")
 
 retriever = SchemaRetriever()
 executor = Executor()
@@ -313,7 +313,7 @@ async def generate_echarts_from_last(question: str, chart_type: str = "", title:
 
     Args:
         question: 用户的图表需求描述（如"展示近三年营收趋势折线图"）
-        chart_type: 图表类型（line/bar/pie/scatter/heatmap），为空时LLM自动选择
+        chart_type: 图表类型（line/bar/pie/scatter/heatmap/candlestick），为空时LLM自动选择
         title: 图表标题，不传入为空
         ctx: MCP上下文，用于获取历史数据
 
@@ -338,7 +338,6 @@ async def generate_echarts_from_last(question: str, chart_type: str = "", title:
         if "error" in config:
             logger.error(f"failed to produce chart config {str(config)}")
             return config
-        config["chart_type"] = chart_type or config.get("series", [{}])[0].get("type", "")
         return config
     except Exception as e:
         logger.error(e)
@@ -358,7 +357,7 @@ async def generate_echarts_from_sql(question: str, sql: str, schema_name: str = 
         sql: SELECT语句
         schema_name: schema名称（必填），可从 list_schemas 获取
         db: 数据库名称（必填），可从 list_databases 获取
-        chart_type: 图表类型（line/bar/pie/scatter/heatmap），为空时LLM自动选择
+        chart_type: 图表类型（line/bar/pie/scatter/heatmap/candlestick），为空时LLM自动选择
         title: 图表标题，不传入为空
         ctx: MCP上下文，用于获取历史数据
 
@@ -442,6 +441,8 @@ def _init():
 
 
 def main():
+    if CLOSE_ENV == "true":
+        remove_proxy()
     _init()
     mcp.run(transport="stdio")
 

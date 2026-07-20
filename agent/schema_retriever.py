@@ -1,4 +1,3 @@
-import os
 import re
 import logging
 import psycopg2
@@ -8,7 +7,7 @@ import httpx
 import sqlglot
 from sqlglot import exp
 from typing import Optional
-from .config import PG_DSN, EMBEDDING_API_URL, EMBEDDING_MODEL, EMBEDDING_API_KEY
+from common.config import PG_DSN, EMBEDDING_API_URL, EMBEDDING_MODEL, EMBEDDING_API_KEY
 
 logger = logging.getLogger(__name__)
 

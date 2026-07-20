@@ -1,7 +1,7 @@
 import json
 import logging
 from openai import AsyncOpenAI
-from .config import LLM_BASE_URL, LLM_API_KEY, LLM_MODEL
+from common.config import LLM_BASE_URL, LLM_API_KEY, LLM_MODEL
 
 logger = logging.getLogger(__name__)
 

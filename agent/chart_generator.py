@@ -2,8 +2,8 @@ import json
 import logging
 import pandas as pd
 from openai import AsyncOpenAI
-from .config import LLM_BASE_URL, LLM_API_KEY, LLM_MODEL
-from .models.chart_model import NewChartFields, ChartType
+from common.config import LLM_BASE_URL, LLM_API_KEY, LLM_MODEL
+from .models.chart_model import NewChartFields
 
 logger = logging.getLogger(__name__)
 
@@ -191,7 +191,6 @@ def _resolve_series(fields: NewChartFields, df: pd.DataFrame) -> list[dict]:
     Returns:
         list[dict]: 每项含 name, type, x_field, y_field, y_axis_index, stack
     """
-    from .models.chart_model import SeriesConfig
 
     if fields.series:
         return [
