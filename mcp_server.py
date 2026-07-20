@@ -83,7 +83,7 @@ def _run_sql(sql: str, schema_name: str = "", db: str = "") -> dict:
     try:
         result = executor.execute_sql(sql, schema_name=schema_name, db=db)
     except Exception as e:
-        return {"error": f"SQL执行失败: {e}"}
+        return {"error": f"SQL {sql} 执行失败: {e}"}
     return result
 
 
@@ -133,8 +133,7 @@ async def _generate_and_execute_internal(question: str) -> dict:
         entry["ddl"] = ddl
         final_schemas.append(entry)
 
-    sql = await generate_sql(question, final_schemas)
-    logger.info("Generated sql: %s", sql)
+    sql = await generate_sql(question, final_schemas, executor=executor, schema_name=final_schemas[0]["schema_name"], db=final_schemas[0]["db"])
 
     if not is_select_sql(sql):
         return {"error": "生成的SQL为非查询语句，无法执行", "sql": sql}

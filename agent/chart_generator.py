@@ -3,7 +3,7 @@ import logging
 import pandas as pd
 from openai import AsyncOpenAI
 from .config import LLM_BASE_URL, LLM_API_KEY, LLM_MODEL
-from .models.chart_model import ChartFields
+from .models.chart_model import NewChartFields, ChartType
 
 logger = logging.getLogger(__name__)
 
@@ -12,21 +12,16 @@ SYSTEM_PROMPT = """你是ECharts配置专家。根据用户需求、图表类型
 如果数据适合生成图表，调用 generate_echarts_option 工具生成配置。
 如果数据不适合可视化（如单列无关联数据、数据量不足等），调用 reject_chart 工具说明原因。
 
-generate_echarts_option 工具的 fields 参数说明:
-- title: 图名称
-- chart_type: 图类型 line/bar/pie/scatter/heatmap
-- x_axis, y_axis_fields, name_field, value_field 等所有列名字段**必须**使用数据中的实际列名，不能自定义或翻译
-- x_axis: 用作 x 轴类目的列名
-- y_axis_fields: 用作 y 轴数值的列名列表
-- name_field: pie 图中用作名称的列名
-- value_field: pie 图中用作数值的列名
-- x_value_field: scatter 图中 x 轴数值列名
-- y_value_field: scatter 图中 y 轴数值列名
-- x_category_field: heatmap 中 x 轴类目列名
-- y_category_field: heatmap 中 y 轴类目列名
-- value_heatmap_field: heatmap 中数值列名
-- series_name: 系列名称
-- extra_config: 额外的 ECharts 配置项（如 visualMap, legend 等），会被合并到最终配置中
+generate_echarts_option 工具参数说明:
+- title: 图表标题，根据数据内容智能生成
+- chart_type: line/bar/pie/scatter/heatmap/candlestick/mixed
+- 简单单系列场景: 用 x 和 y 指定列名
+- K线图(candlestick): 用 x 指定日期列，series配置open_field/close_field/low_field/high_field
+- 多系列/混合图表场景: 用 series 数组，每个系列独立配置 x_field/y_field/type/y_axis_index/stack
+- group_field: 按某列值自动分组生成多系列
+- y_axes: 双Y轴配置，当不同系列量纲差异大时使用
+- visual_map_field: 散点图控制气泡大小/颜色，热力图控制颜色深浅
+- 所有列名字段**必须**使用数据中的实际列名，不能翻译或自定义
 
 reject_chart 工具参数:
 - reason: 数据不适合可视化的原因
@@ -41,7 +36,7 @@ GENERATE_TOOL = {
     "function": {
         "name": "generate_echarts_option",
         "description": "根据样本数据的列名和特征，生成ECharts图配置。包含图表类型选择、数据列映射、系列配置等。所有列名必须使用数据中的实际列名。",
-        "parameters": ChartFields.model_json_schema(),
+        "parameters": NewChartFields.model_json_schema(),
     },
 }
 
@@ -99,15 +94,19 @@ async def generate_chart(
             {"role": "user", "content": user_prompt},
         ],
         temperature=0.1,
-        max_tokens=1024,
+        max_tokens=2048,
         tools=[GENERATE_TOOL, REJECT_TOOL],
         tool_choice="auto",
     )
 
     msg = resp.choices[0].message
-    if not msg.tool_calls:
+    if not msg.tool_calls or len(msg.tool_calls) == 0:
         reason = msg.content or "LLM未调用任何工具"
         return {"error": f"数据不适合生成图表: {reason}"}
+
+    if len(msg.tool_calls) != 1:
+        names = [tc.function.name for tc in msg.tool_calls]
+        return {"error": f"LLM应只调用一次工具，实际调用了 {len(msg.tool_calls)} 次: {names}"}
 
     tool_call = msg.tool_calls[0]
     tool_name = tool_call.function.name
@@ -119,7 +118,7 @@ async def generate_chart(
     if tool_name != "generate_echarts_option":
         return {"error": f"LLM调用了未预期的工具: {tool_name}"}
 
-    fields = ChartFields(**args)
+    fields = NewChartFields(**args)
 
     df = pd.DataFrame(rows, columns=columns)
     option = _build_option(fields, df, title)
@@ -127,19 +126,52 @@ async def generate_chart(
     return option
 
 
-def _build_option(fields: ChartFields, df: pd.DataFrame, title: str) -> dict:
-    builder = {
-        "line": _build_line_bar,
-        "bar": _build_line_bar,
-        "pie": _build_pie,
-        "scatter": _build_scatter,
-        "heatmap": _build_heatmap,
-    }.get(fields.chart_type)
+def _collect_used_columns(fields: NewChartFields) -> list[str]:
+    """收集 fields 中引用的所有列名，用于统一校验。"""
+    cols = []
+    if fields.x:
+        cols.append(fields.x)
+    if fields.y:
+        cols.append(fields.y)
+    if fields.group_field:
+        cols.append(fields.group_field)
+    if fields.visual_map_field:
+        cols.append(fields.visual_map_field)
+    for sc in fields.series:
+        if sc.x_field:
+            cols.append(sc.x_field)
+        if sc.y_field:
+            cols.append(sc.y_field)
+        if sc.open_field:
+            cols.append(sc.open_field)
+        if sc.close_field:
+            cols.append(sc.close_field)
+        if sc.low_field:
+            cols.append(sc.low_field)
+        if sc.high_field:
+            cols.append(sc.high_field)
+    return list(set(cols))
 
-    if builder is None:
-        builder = _build_line_bar
 
-    option = builder(fields, df, title)
+def _build_option(fields: NewChartFields, df: pd.DataFrame, title: str) -> dict:
+    used_cols = _collect_used_columns(fields)
+    missing = [c for c in used_cols if c not in df.columns]
+    if missing:
+        return {"error": f"列名 {missing} 不在数据列 {list(df.columns)} 中"}
+
+    chart_type = fields.chart_type.value if hasattr(fields.chart_type, "value") else str(fields.chart_type)
+
+    if chart_type == "pie":
+        option = _build_pie(fields, df, title)
+    elif chart_type == "scatter":
+        option = _build_scatter(fields, df, title)
+    elif chart_type == "heatmap":
+        option = _build_heatmap(fields, df, title)
+    elif chart_type == "candlestick":
+        option = _build_candlestick(fields, df, title)
+    else:
+        option = _build_line_bar(fields, df, title)
+
     if "error" in option:
         return option
 
@@ -151,33 +183,103 @@ def _build_option(fields: ChartFields, df: pd.DataFrame, title: str) -> dict:
     return option
 
 
-def _build_line_bar(fields: ChartFields, df: pd.DataFrame, title: str) -> dict:
-    x_col = fields.x_axis or df.columns[0]
-    if x_col not in df.columns:
-        return {"error": f"列名 '{x_col}' 不在数据列 {list(df.columns)} 中"}
+def _resolve_series(fields: NewChartFields, df: pd.DataFrame) -> list[dict]:
+    """从 fields 解析出统一的 series 配置列表。
 
-    user_y_cols = fields.y_axis_fields or []
-    y_cols = [c for c in user_y_cols if c in df.columns] or [c for c in df.columns if c != x_col]
+    优先级: series 数组 > group_field 自动分组 > x/y 简单模式
+
+    Returns:
+        list[dict]: 每项含 name, type, x_field, y_field, y_axis_index, stack
+    """
+    from .models.chart_model import SeriesConfig
+
+    if fields.series:
+        return [
+            {
+                "name": sc.name,
+                "type": sc.type.value if hasattr(sc.type, "value") else str(sc.type),
+                "x_field": sc.x_field or fields.x or "",
+                "y_field": sc.y_field or fields.y or "",
+                "open_field": sc.open_field,
+                "close_field": sc.close_field,
+                "low_field": sc.low_field,
+                "high_field": sc.high_field,
+                "y_axis_index": sc.y_axis_index,
+                "stack": sc.stack,
+            }
+            for sc in fields.series
+        ]
+
+    if fields.group_field:
+        group_values = df[fields.group_field].unique().tolist()
+        chart_type = fields.chart_type.value if hasattr(fields.chart_type, "value") else str(fields.chart_type)
+        return [
+            {
+                "name": str(g),
+                "type": chart_type if chart_type != "mixed" else "line",
+                "x_field": fields.x,
+                "y_field": fields.y,
+                "y_axis_index": 0,
+                "stack": None,
+            }
+            for g in group_values
+        ]
+
+    chart_type = fields.chart_type.value if hasattr(fields.chart_type, "value") else str(fields.chart_type)
+    return [
+        {
+            "name": fields.y or "",
+            "type": chart_type if chart_type != "mixed" else "line",
+            "x_field": fields.x,
+            "y_field": fields.y,
+            "y_axis_index": 0,
+            "stack": None,
+        }
+    ]
+
+
+def _build_line_bar(fields: NewChartFields, df: pd.DataFrame, title: str) -> dict:
+    series_configs = _resolve_series(fields, df)
+    x_col = series_configs[0]["x_field"] or df.columns[0]
 
     x_raw = _safe_list(df[x_col])
     x_is_category = _is_category_type(x_raw)
-    x_type = "category" if x_is_category else "time"
 
     series = []
-    for col in y_cols:
-        s = {"name": fields.series_name if fields.series_name and len(y_cols) == 1 else col, "type": fields.chart_type}
-        if x_is_category:
-            s["data"] = _safe_list(df[col])
+    for sc in series_configs:
+        s = {"name": sc["name"], "type": sc["type"]}
+        if fields.group_field:
+            mask = df[fields.group_field].astype(str) == sc["name"]
+            sub_df = df[mask]
+            if x_is_category:
+                s["data"] = _safe_list(sub_df[sc["y_field"]])
+            else:
+                s["data"] = sub_df[[sc["x_field"], sc["y_field"]]].values.tolist()
         else:
-            s["data"] = df[[x_col, col]].values.tolist()
+            if x_is_category:
+                s["data"] = _safe_list(df[sc["y_field"]])
+            else:
+                s["data"] = df[[sc["x_field"], sc["y_field"]]].values.tolist()
+        if sc.get("y_axis_index"):
+            s["yAxisIndex"] = sc["y_axis_index"]
+        if sc.get("stack"):
+            s["stack"] = sc["stack"]
         series.append(s)
 
+    if fields.y_axes:
+        y_axis = [
+            {"type": "value", "name": ya.name, "position": ya.position.value if hasattr(ya.position, "value") else str(ya.position)}
+            for ya in fields.y_axes
+        ]
+    else:
+        y_axis = {"type": "value"}
+
     result = {
-        "title": {"text": title},
+        "title": {"text": title or fields.title or ""},
         "tooltip": {"trigger": "axis"},
         "legend": {},
-        "xAxis": {"type": x_type, "name": x_col},
-        "yAxis": {"type": "value"},
+        "xAxis": {"type": "category" if x_is_category else "time", "name": x_col},
+        "yAxis": y_axis,
         "series": series,
     }
     if x_is_category:
@@ -186,13 +288,55 @@ def _build_line_bar(fields: ChartFields, df: pd.DataFrame, title: str) -> dict:
     return result
 
 
-def _build_pie(fields: ChartFields, df: pd.DataFrame, title: str) -> dict:
-    name_col = fields.name_field or df.columns[0]
-    value_col = fields.value_field or df.columns[1]
-    if name_col not in df.columns or value_col not in df.columns:
-        valid = [c for c in [name_col, value_col] if c in df.columns]
-        missing = [c for c in [name_col, value_col] if c not in df.columns]
-        return {"error": f"列名 {missing} 不在数据列 {list(df.columns)} 中"}
+def _build_candlestick(fields: NewChartFields, df: pd.DataFrame, title: str) -> dict:
+    series_configs = _resolve_series(fields, df)
+    sc = series_configs[0]
+    x_col = sc["x_field"] or fields.x or df.columns[0]
+
+    open_c = sc.get("open_field") or df.columns[1]
+    close_c = sc.get("close_field") or df.columns[2]
+    low_c = sc.get("low_field") or df.columns[3]
+    high_c = sc.get("high_field") or df.columns[4]
+    missing = [c for c in [x_col, open_c, close_c, low_c, high_c] if c not in df.columns]
+    if missing:
+        return {"error": f"K线图列名 {missing} 不在数据列 {list(df.columns)} 中"}
+
+    x_raw = _safe_list(df[x_col])
+    x_is_category = _is_category_type(x_raw)
+
+    if x_is_category:
+        data = df[[open_c, close_c, low_c, high_c]].values.tolist()
+    else:
+        data = df[[x_col, open_c, close_c, low_c, high_c]].values.tolist()
+
+    result = {
+        "title": {"text": title or fields.title or ""},
+        "tooltip": {"trigger": "axis"},
+        "legend": {},
+        "xAxis": {"type": "category" if x_is_category else "time", "name": x_col},
+        "yAxis": {"type": "value",
+            "scale": True,
+            "splitArea": {
+                "show": True
+            }
+        },
+        "series": [
+            {
+                "name": sc["name"] or "K线",
+                "type": "candlestick",
+                "data": data,
+            }
+        ],
+    }
+    if x_is_category:
+        result["xAxis"]["data"] = x_raw
+
+    return result
+
+
+def _build_pie(fields: NewChartFields, df: pd.DataFrame, title: str) -> dict:
+    name_col = fields.x or df.columns[0]
+    value_col = fields.y or df.columns[1]
 
     data = [
         {"name": _safe_value(row[name_col]), "value": _safe_value(row[value_col])}
@@ -200,12 +344,12 @@ def _build_pie(fields: ChartFields, df: pd.DataFrame, title: str) -> dict:
     ]
 
     return {
-        "title": {"text": title},
+        "title": {"text": title or fields.title or ""},
         "tooltip": {"trigger": "item"},
         "legend": {"orient": "vertical", "left": "left"},
         "series": [
             {
-                "name": fields.series_name or "",
+                "name": value_col,
                 "type": "pie",
                 "radius": "60%",
                 "data": data,
@@ -214,37 +358,46 @@ def _build_pie(fields: ChartFields, df: pd.DataFrame, title: str) -> dict:
     }
 
 
-def _build_scatter(fields: ChartFields, df: pd.DataFrame, title: str) -> dict:
-    x_col = fields.x_value_field or df.columns[0]
-    y_col = fields.y_value_field or df.columns[1]
-    if x_col not in df.columns or y_col not in df.columns:
-        missing = [c for c in [x_col, y_col] if c not in df.columns]
-        return {"error": f"列名 {missing} 不在数据列 {list(df.columns)} 中"}
+def _build_scatter(fields: NewChartFields, df: pd.DataFrame, title: str) -> dict:
+    series_configs = _resolve_series(fields, df)
 
-    data = df[[x_col, y_col]].where(pd.notna(df), None).values.tolist()
+    series = []
+    for sc in series_configs:
+        data = df[[sc["x_field"], sc["y_field"]]].where(pd.notna(df[[sc["x_field"], sc["y_field"]]]), None).values.tolist()
+        s = {"name": sc["name"], "type": "scatter", "data": data}
+        series.append(s)
 
-    return {
-        "title": {"text": title},
+    x_name = series_configs[0]["x_field"]
+    y_name = series_configs[0]["y_field"]
+
+    result = {
+        "title": {"text": title or fields.title or ""},
         "tooltip": {"trigger": "item"},
-        "xAxis": {"type": "value", "name": x_col},
-        "yAxis": {"type": "value", "name": y_col},
-        "series": [
-            {
-                "name": fields.series_name or "",
-                "type": "scatter",
-                "data": data,
-            }
-        ],
+        "xAxis": {"type": "value", "name": x_name},
+        "yAxis": {"type": "value", "name": y_name},
+        "series": series,
     }
 
+    if fields.visual_map_field and fields.visual_map_field in df.columns:
+        vmin = float(df[fields.visual_map_field].min())
+        vmax = float(df[fields.visual_map_field].max())
+        result["visualMap"] = {
+            "min": vmin,
+            "max": vmax,
+            "dimension": 2,
+            "calculable": True,
+            "orient": "horizontal",
+            "left": "center",
+            "bottom": 15,
+        }
 
-def _build_heatmap(fields: ChartFields, df: pd.DataFrame, title: str) -> dict:
-    x_col = fields.x_category_field or df.columns[0]
-    y_col = fields.y_category_field or df.columns[1]
-    v_col = fields.value_heatmap_field or df.columns[2]
-    missing = [c for c in [x_col, y_col, v_col] if c not in df.columns]
-    if missing:
-        return {"error": f"列名 {missing} 不在数据列 {list(df.columns)} 中"}
+    return result
+
+
+def _build_heatmap(fields: NewChartFields, df: pd.DataFrame, title: str) -> dict:
+    x_col = fields.x or df.columns[0]
+    y_col = fields.y or df.columns[1]
+    v_col = fields.visual_map_field or df.columns[2]
 
     x_cats = df[x_col].unique().tolist()
     y_cats = df[y_col].unique().tolist()
@@ -256,7 +409,7 @@ def _build_heatmap(fields: ChartFields, df: pd.DataFrame, title: str) -> dict:
         data.append([x_idx, y_idx, _safe_value(row[v_col])])
 
     return {
-        "title": {"text": title},
+        "title": {"text": title or fields.title or ""},
         "tooltip": {"trigger": "item"},
         "xAxis": {"type": "category", "data": [str(x) for x in x_cats]},
         "yAxis": {"type": "category", "data": [str(y) for y in y_cats]},
@@ -270,7 +423,7 @@ def _build_heatmap(fields: ChartFields, df: pd.DataFrame, title: str) -> dict:
         },
         "series": [
             {
-                "name": fields.series_name or "",
+                "name": v_col,
                 "type": "heatmap",
                 "data": data,
             }

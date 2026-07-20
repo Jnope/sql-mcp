@@ -95,7 +95,7 @@ class Executor:
                 rows = [[row.get(c) for c in columns] for row in data]
                 return {"columns": columns, "rows": rows, "rowCount": len(rows)}
 
-            columns = extract_column_names(sql)
+            columns = extract_column_names(sql, schema_name=schema_name, db=db or "")
             if not columns or len(columns) != len(first):
                 columns = [f"col_{i}" for i in range(len(first))]
             return {"columns": columns, "rows": data, "rowCount": len(data)}

@@ -10,12 +10,14 @@ class ChartType(str, Enum):
     PIE = "pie"
     SCATTER = "scatter"
     HEATMAP = "heatmap"
+    CANDLESTICK = "candlestick"
     MIXED = "mixed"
 
 class SeriesType(str, Enum):
     LINE = "line"
     BAR = "bar"
     SCATTER = "scatter"
+    CANDLESTICK = "candlestick"
 
 class AxisPosition(str, Enum):
     LEFT = "left"
@@ -35,6 +37,22 @@ class SeriesConfig(BaseModel):
     )
     y_field: str = Field(
         description="该系列y轴使用的列名。必须使用数据中的实际列名，不能翻译。如'温度'、'销售额'、'数量'"
+    )
+    open_field: Optional[str] = Field(
+        default=None,
+        description="K线图开盘价列名。仅chart_type=candlestick时使用。必须使用数据中的实际列名"
+    )
+    close_field: Optional[str] = Field(
+        default=None,
+        description="K线图收盘价列名。仅chart_type=candlestick时使用。必须使用数据中的实际列名"
+    )
+    low_field: Optional[str] = Field(
+        default=None,
+        description="K线图最低价列名。仅chart_type=candlestick时使用。必须使用数据中的实际列名"
+    )
+    high_field: Optional[str] = Field(
+        default=None,
+        description="K线图最高价列名。仅chart_type=candlestick时使用。必须使用数据中的实际列名"
     )
     y_axis_index: int = Field(
         default=0,

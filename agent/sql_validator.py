@@ -1,4 +1,5 @@
 import logging
+import re
 import sqlglot
 from sqlglot import exp
 
@@ -23,7 +24,18 @@ DIALECT = "mysql"
 def validate_readonly(sql: str, authorized_tables: list[str] | None = None) -> str:
     sql = sql.strip().rstrip(";")
 
-    statements = sqlglot.parse(sql, read=DIALECT)
+    try:
+        statements = sqlglot.parse(sql, read=DIALECT)
+    except (sqlglot.errors.ParseError, sqlglot.errors.OptimizeError):
+        logger.warning("sqlglot failed to parse SQL, skipping AST validation: %s", sql[:200])
+        upper = sql.upper().lstrip()
+        if not (upper.startswith("SELECT") or upper.startswith("WITH")):
+            raise ValueError("仅允许SELECT语句")
+        if not re.search(r"\bLIMIT\b", sql, re.IGNORECASE):
+            sql = f"{sql} LIMIT 100"
+            logger.info("Auto-added LIMIT 100 (fallback)")
+        return sql
+
     if not statements or len(statements) > 1:
         raise ValueError("禁止多语句或空语句")
 
@@ -73,7 +85,11 @@ def extract_table_names(sql: str) -> list[str]:
 
 def is_select_sql(sql: str) -> bool:
     sql = sql.strip().rstrip(";")
-    statements = sqlglot.parse(sql, read=DIALECT)
+    try:
+        statements = sqlglot.parse(sql, read=DIALECT)
+    except (sqlglot.errors.ParseError, sqlglot.errors.OptimizeError):
+        upper = sql.upper().lstrip()
+        return upper.startswith("SELECT") or upper.startswith("WITH")
     if not statements or len(statements) > 1:
         return False
     ast = statements[0]
@@ -82,9 +98,12 @@ def is_select_sql(sql: str) -> bool:
     return isinstance(ast, (exp.Select, exp.With))
 
 
-def extract_column_names(sql: str) -> list[str]:
+def extract_column_names(sql: str, schema_name: str = "", db: str = "") -> list[str]:
     sql = sql.strip().rstrip(";")
-    statements = sqlglot.parse(sql, read=DIALECT)
+    try:
+        statements = sqlglot.parse(sql, read=DIALECT)
+    except (sqlglot.errors.ParseError, sqlglot.errors.OptimizeError):
+        return []
     if not statements:
         return []
     ast = statements[0]
@@ -99,14 +118,35 @@ def extract_column_names(sql: str) -> list[str]:
         return []
 
     columns = []
+    has_star = False
     for proj in select_node.expressions:
         if isinstance(proj, exp.Alias):
             columns.append(proj.alias_or_name)
         elif isinstance(proj, exp.Star):
-            return []
+            has_star = True
         else:
             if isinstance(proj, exp.Column):
                 columns.append(proj.name)
             else:
                 columns.append(proj.alias_or_name or str(proj))
+
+    if has_star and not columns:
+        from .executor import Executor
+        tables = [t.name for t in select_node.find_all(exp.Table)]
+        if tables:
+            try:
+                ddl = Executor().get_table_ddl(schema_name, db, tables[0])
+                if ddl:
+                    parsed = sqlglot.parse_one(ddl, read=DIALECT)
+                    if isinstance(parsed, exp.Create):
+                        schema = parsed.this
+                        if isinstance(schema, exp.Schema):
+                            columns = [col.name for col in schema.expressions if isinstance(col, exp.ColumnDef)]
+            except Exception:
+                logger.error(f"failed to get {schema_name}, {db}.{tables[0]} ddl or failed to extract ddl")
+                pass
+
+    if has_star and not columns:
+        return []
+
     return columns
