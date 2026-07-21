@@ -235,7 +235,7 @@ async def search_tables(question: str) -> dict:
     if not selected_keys:
         elapsed = round(time.time() - t0, 1)
         logger.warning("failed to select tables by llm")
-        return build_response(tool="search_tables", elapsed_seconds=elapsed, data=_serialize_schemas(coarse[:5]))
+        return build_response(tool="search_tables", question=question, elapsed_seconds=elapsed, data=_serialize_schemas(coarse[:5]))
 
     ddl_map = retriever.get_ddl_by_names(selected_keys)
 
@@ -256,7 +256,7 @@ async def search_tables(question: str) -> dict:
         result.append(entry)
 
     elapsed = round(time.time() - t0, 1)
-    return build_response(tool="search_tables", elapsed_seconds=elapsed, data=result)
+    return build_response(tool="search_tables", question=question, elapsed_seconds=elapsed, data=result)
 
 
 @mcp.tool()
@@ -281,7 +281,7 @@ async def generate_and_execute_sql(question: str, ctx: Context = None) -> dict:
                    "schema_name": internal.get("schema_name", ""), "db": internal.get("db", "")}
         await _set_ctx_state(ctx, payload)
         elapsed = round(time.time() - t0, 1)
-        return build_response(tool="generate_and_execute_sql", elapsed_seconds=elapsed, data=payload)
+        return build_response(tool="generate_and_execute_sql", question=question, elapsed_seconds=elapsed, data=payload)
 
     sql = internal["sql"]
     result = internal["result"]
@@ -310,7 +310,7 @@ async def generate_and_execute_sql(question: str, ctx: Context = None) -> dict:
                "schema_name": schema_name, "db": db}
     await _set_ctx_state(ctx, payload)
     elapsed = round(time.time() - t0, 1)
-    return build_response(tool="generate_and_execute_sql", elapsed_seconds=elapsed, data=payload)
+    return build_response(tool="generate_and_execute_sql", question=question, elapsed_seconds=elapsed, data=payload)
 
 
 @mcp.tool()
@@ -347,12 +347,12 @@ async def generate_echarts_from_last(question: str, chart_type: str = "", title:
         elapsed = round(time.time() - t0, 1)
         if "error" in config:
             logger.error(f"failed to produce chart config {str(config)}")
-            return build_response(tool="generate_echarts_from_last", success=False, elapsed_seconds=elapsed, error=config['error'])
-        return build_response(tool="generate_echarts_from_last", elapsed_seconds=elapsed, data=config)
+            return build_response(tool="generate_echarts_from_last", question=question, success=False, elapsed_seconds=elapsed, error=config['error'])
+        return build_response(tool="generate_echarts_from_last", question=question, elapsed_seconds=elapsed, data=config)
     except Exception as e:
         logger.error(e)
         elapsed = round(time.time() - t0, 1)
-        return build_response(tool="generate_echarts_from_last", success=False, elapsed_seconds=elapsed, error=str(e))
+        return build_response(tool="generate_echarts_from_last", question=question, success=False, elapsed_seconds=elapsed, error=str(e))
 
 
 @mcp.tool()
@@ -390,12 +390,12 @@ async def generate_echarts_from_sql(question: str, sql: str, schema_name: str = 
         elapsed = round(time.time() - t0, 1)
         if "error" in config:
             logger.error(f"failed to produce chart config {str(config)}")
-            return build_response(tool="generate_echarts_from_sql", success=False, elapsed_seconds=elapsed, error=config['error'])
-        return build_response(tool="generate_echarts_from_sql", elapsed_seconds=elapsed, data=config)
+            return build_response(tool="generate_echarts_from_sql", question=question, success=False, elapsed_seconds=elapsed, error=config['error'])
+        return build_response(tool="generate_echarts_from_sql", question=question, elapsed_seconds=elapsed, data=config)
     except Exception as e:
         logger.error(e)
         elapsed = round(time.time() - t0, 1)
-        return build_response(tool="generate_echarts_from_sql", success=False, elapsed_seconds=elapsed, error=str(e))
+        return build_response(tool="generate_echarts_from_sql", question=question, success=False, elapsed_seconds=elapsed, error=str(e))
 
 
 @mcp.tool()
