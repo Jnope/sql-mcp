@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from agent.utils.log_util import setup_admin_logging
+from common.log_util import setup_admin_logging
 from api.routes import router
 from api.sync_task import start_sync_task, stop_sync_task
 from common.config import CLOSE_ENV

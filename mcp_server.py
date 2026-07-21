@@ -1,18 +1,20 @@
 import json
 import logging
 import os
+import time
 
 import sqlglot
 from fastmcp import FastMCP
 from fastmcp.server.context import Context
 
+from agent.response import build_response
 from agent.schema_retriever import SchemaRetriever
 from agent.nl2sql import generate_sql, explain_result
 from agent.sql_validator import validate_readonly, is_select_sql
 from agent.executor import Executor
 from agent.chart_generator import generate_chart
 from common.config import CLOSE_ENV, LLM_BASE_URL, LLM_API_KEY, LLM_MODEL, RETRIEVE_TOP_N, MAX_RETURN_ROWS, MAX_CHART_ROWS, AVAILABLE_SCHEMAS
-from agent.utils.log_util import setup_logging
+from common.log_util import setup_logging
 from openai import AsyncOpenAI
 
 from common.env_utils import remove_proxy
@@ -209,8 +211,8 @@ async def _llm_select_tables(
 
 
 @mcp.tool()
-async def search_tables(question: str) -> list[dict]:
-    """根据自然语言问题，检索相关数据库表结构。
+async def search_tables(question: str) -> dict:
+    """根据自然语言问题，检索相关数据库表及其ddl、描述等信息。
 
     流程：向量粗筛 top-N → 结合全量表清单经 LLM 推理 → 返回最终相关表结构（含DDL）
 
@@ -220,6 +222,7 @@ async def search_tables(question: str) -> list[dict]:
     Returns:
         表结构信息列表（表名、字段、类型、DDL、注释）
     """
+    t0 = time.time()
     coarse = retriever.retrieve(question, top_n=TOP_N_COARSE)
     logger.info("Coarse retrieve top-%d: got %d tables", TOP_N_COARSE, len(coarse))
 
@@ -230,8 +233,9 @@ async def search_tables(question: str) -> list[dict]:
     logger.debug("LLM selected tables: %s",  selected_keys)
 
     if not selected_keys:
+        elapsed = round(time.time() - t0, 1)
         logger.warning("failed to select tables by llm")
-        return _serialize_schemas(coarse[:5])
+        return build_response(tool="search_tables", elapsed_seconds=elapsed, data=_serialize_schemas(coarse[:5]))
 
     ddl_map = retriever.get_ddl_by_names(selected_keys)
 
@@ -251,7 +255,8 @@ async def search_tables(question: str) -> list[dict]:
         entry["ddl"] = ddl_map.get((s, d or "", t), "")
         result.append(entry)
 
-    return result
+    elapsed = round(time.time() - t0, 1)
+    return build_response(tool="search_tables", elapsed_seconds=elapsed, data=result)
 
 
 @mcp.tool()
@@ -266,6 +271,7 @@ async def generate_and_execute_sql(question: str, ctx: Context = None) -> dict:
     Returns:
         包含 sql、result（SELECT时有columns/rows/rowCount，非SELECT时为null）、explanation（AI结论）
     """
+    t0 = time.time()
     internal = await _generate_and_execute_internal(question)
 
     if "error" in internal:
@@ -274,7 +280,8 @@ async def generate_and_execute_sql(question: str, ctx: Context = None) -> dict:
         payload = {"sql": sql, "result": None, "explanation": explanation,
                    "schema_name": internal.get("schema_name", ""), "db": internal.get("db", "")}
         await _set_ctx_state(ctx, payload)
-        return payload
+        elapsed = round(time.time() - t0, 1)
+        return build_response(tool="generate_and_execute_sql", elapsed_seconds=elapsed, data=payload)
 
     sql = internal["sql"]
     result = internal["result"]
@@ -302,7 +309,8 @@ async def generate_and_execute_sql(question: str, ctx: Context = None) -> dict:
     payload = {"sql": sql, "result": result, "explanation": explanation,
                "schema_name": schema_name, "db": db}
     await _set_ctx_state(ctx, payload)
-    return payload
+    elapsed = round(time.time() - t0, 1)
+    return build_response(tool="generate_and_execute_sql", elapsed_seconds=elapsed, data=payload)
 
 
 @mcp.tool()
@@ -319,8 +327,9 @@ async def generate_echarts_from_last(question: str, chart_type: str = "", title:
 
     Returns:
         成功: ECharts配置字典，可直接用于前端渲染
-        失败: {"error": "原因说明"}
+        失败: 失败原因说明
     """
+    t0 = time.time()
     try:
         if ctx is None:
             return {"error": "无MCP上下文"}
@@ -335,13 +344,15 @@ async def generate_echarts_from_last(question: str, chart_type: str = "", title:
             logger.error(f"failed to get sql output {str(parsed)}")
             return parsed
         config = await generate_chart(question, parsed, chart_type, title)
+        elapsed = round(time.time() - t0, 1)
         if "error" in config:
             logger.error(f"failed to produce chart config {str(config)}")
-            return config
-        return config
+            return build_response(tool="generate_echarts_from_last", success=False, elapsed_seconds=elapsed, error=config['error'])
+        return build_response(tool="generate_echarts_from_last", elapsed_seconds=elapsed, data=config)
     except Exception as e:
         logger.error(e)
-        return {"error": str(e)}
+        elapsed = round(time.time() - t0, 1)
+        return build_response(tool="generate_echarts_from_last", success=False, elapsed_seconds=elapsed, error=str(e))
 
 
 @mcp.tool()
@@ -362,9 +373,10 @@ async def generate_echarts_from_sql(question: str, sql: str, schema_name: str = 
         ctx: MCP上下文，用于获取历史数据
 
     Returns:
-        成功: ECharts配置字典，可直接用于前端渲染
-        失败: {"error": "原因说明"}
+        成功: ECharts配置字典
+        失败: 失败原因说明
     """
+    t0 = time.time()
     try:
         if not schema_name or not db:
             return {"error": "缺少 schema_name 或 db 参数，请先调用 list_schemas 和 list_databases 获取"}
@@ -375,13 +387,15 @@ async def generate_echarts_from_sql(question: str, sql: str, schema_name: str = 
         if ctx is not None:
             await _set_ctx_state(ctx, {"sql": sql, "result": parsed, "schema_name": schema_name, "db": db})
         config = await generate_chart(question, parsed, chart_type, title)
+        elapsed = round(time.time() - t0, 1)
         if "error" in config:
             logger.error(f"failed to produce chart config {str(config)}")
-            return config
-        return config
+            return build_response(tool="generate_echarts_from_sql", success=False, elapsed_seconds=elapsed, error=config['error'])
+        return build_response(tool="generate_echarts_from_sql", elapsed_seconds=elapsed, data=config)
     except Exception as e:
         logger.error(e)
-        return {"error": str(e)}
+        elapsed = round(time.time() - t0, 1)
+        return build_response(tool="generate_echarts_from_sql", success=False, elapsed_seconds=elapsed, error=str(e))
 
 
 @mcp.tool()
