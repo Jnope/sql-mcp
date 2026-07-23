@@ -210,7 +210,7 @@ async def _llm_select_tables(
     return _parse_tables_from_llm_output(raw)
 
 
-@mcp.tool()
+# @mcp.tool()
 async def search_tables(question: str) -> dict:
     """根据自然语言问题，检索相关数据库表及其ddl、描述等信息。
 
@@ -315,9 +315,9 @@ async def generate_and_execute_sql(question: str, ctx: Context = None) -> dict:
 
 @mcp.tool()
 async def generate_echarts_from_last(question: str, chart_type: str = "", title: str = "", ctx: Context = None) -> dict:
-    """基于上次SQL的原始结果（去LIMIT重执行获取完整数据）生成ECharts配置，直接返回配置JSON。
+    """基于上次SQL的原始结果（去LIMIT重执行获取完整数据）生成ECharts配置。
 
-    LLM判断数据不适合可视化时返回 {"error": "原因说明"}，不生成图表配置。
+    LLM判断数据不适合可视化时config为null，explanation说明原因。
 
     Args:
         question: 用户的图表需求描述（如"展示近三年营收趋势折线图"）
@@ -326,42 +326,68 @@ async def generate_echarts_from_last(question: str, chart_type: str = "", title:
         ctx: MCP上下文，用于获取历史数据
 
     Returns:
-        成功: ECharts配置字典，可直接用于前端渲染
-        失败: 失败原因说明
+        包含 sql、result（columns/rows/rowCount）、explanation（AI结论）、schema_name、db、config（ECharts配置，失败时为null）
     """
     t0 = time.time()
     try:
         if ctx is None:
-            return {"error": "无MCP上下文"}
+            elapsed = round(time.time() - t0, 1)
+            payload = {"sql": "", "result": None, "explanation": "无MCP上下文", "schema_name": "", "db": "", "config": None}
+            return build_response(tool="generate_echarts_from_last", question=question, success=False, elapsed_seconds=elapsed, error="无MCP上下文", data=payload)
         last = await ctx.get_state("last_sql_result")
         if not last or not last.get("sql"):
-            return {"error": "无历史SQL可重执行"}
+            elapsed = round(time.time() - t0, 1)
+            payload = {"sql": "", "result": None, "explanation": "无历史SQL可重执行", "schema_name": "", "db": "", "config": None}
+            return build_response(tool="generate_echarts_from_last", question=question, success=False, elapsed_seconds=elapsed, error="无历史SQL可重执行", data=payload)
         last_sql = last["sql"]
         schema_name = last.get("schema_name", "")
         db = last.get("db", "")
         parsed = _run_sql(last_sql, schema_name=schema_name, db=db)
         if "error" in parsed:
             logger.error(f"failed to get sql output {str(parsed)}")
-            return parsed
+            explanation = await _safe_explain(question, last_sql, parsed["error"])
+            elapsed = round(time.time() - t0, 1)
+            payload = {"sql": last_sql, "result": None, "explanation": explanation, "schema_name": schema_name, "db": db, "config": None}
+            return build_response(tool="generate_echarts_from_last", question=question, success=False, elapsed_seconds=elapsed, error=parsed["error"], data=payload)
         config = await generate_chart(question, parsed, chart_type, title)
+        total_count = parsed.get("rowCount", 0)
+        if total_count > MAX_RETURN_ROWS:
+            parsed["rows"] = parsed["rows"][:MAX_RETURN_ROWS]
+            parsed["rowCount"] = MAX_RETURN_ROWS
+            parsed["truncated"] = True
+            parsed["totalRowCount"] = total_count
+        else:
+            parsed["truncated"] = False
+            parsed["totalRowCount"] = total_count
         elapsed = round(time.time() - t0, 1)
         if "error" in config:
             logger.error(f"failed to produce chart config {str(config)}")
-            return build_response(tool="generate_echarts_from_last", question=question, success=False, elapsed_seconds=elapsed, error=config['error'])
-        return build_response(tool="generate_echarts_from_last", question=question, elapsed_seconds=elapsed, data=config)
+            explanation = await _safe_explain(question, last_sql, config['error'])
+            payload = {"sql": last_sql, "result": parsed, "explanation": explanation, "schema_name": schema_name, "db": db, "config": None}
+            return build_response(tool="generate_echarts_from_last", question=question, success=False, elapsed_seconds=elapsed, error=config['error'], data=payload)
+        row_count = parsed.get("rowCount", 0)
+        col_count = len(parsed.get("columns", []))
+        result_summary = f"返回 {row_count} 行, {col_count} 列"
+        if row_count > 0:
+            sample = parsed["rows"][:3]
+            result_summary += f"\n前3行: {json.dumps(sample, ensure_ascii=False, default=str)}"
+        explanation = await _safe_explain(question, last_sql, result_summary)
+        payload = {"sql": last_sql, "result": parsed, "explanation": explanation, "schema_name": schema_name, "db": db, "config": config}
+        return build_response(tool="generate_echarts_from_last", question=question, elapsed_seconds=elapsed, data=payload)
     except Exception as e:
         logger.error(e)
         elapsed = round(time.time() - t0, 1)
-        return build_response(tool="generate_echarts_from_last", question=question, success=False, elapsed_seconds=elapsed, error=str(e))
+        payload = {"sql": "", "result": None, "explanation": "", "schema_name": "", "db": "", "config": None}
+        return build_response(tool="generate_echarts_from_last", question=question, success=False, elapsed_seconds=elapsed, error=str(e), data=payload)
 
 
 @mcp.tool()
 async def generate_echarts_from_sql(question: str, sql: str, schema_name: str = "", db: str = "", chart_type: str = "", title: str = "", ctx: Context = None) -> dict:
-    """执行指定SQL并从结果生成ECharts配置，直接返回配置JSON。
+    """执行指定SQL并从结果生成ECharts配置。
 
     先校验执行SQL获取数据，再根据数据生成图表。schema_name 和 db 可通过 list_schemas / list_databases 获取。
 
-    LLM判断数据不适合可视化时返回 {"error": "原因说明"}，不生成图表配置。
+    LLM判断数据不适合可视化时config为null，explanation说明原因。
 
     Args:
         question: 用户的图表需求描述（如"展示近三年营收趋势折线图"）
@@ -373,29 +399,53 @@ async def generate_echarts_from_sql(question: str, sql: str, schema_name: str = 
         ctx: MCP上下文，用于获取历史数据
 
     Returns:
-        成功: ECharts配置字典
-        失败: 失败原因说明
+        包含 sql、result（columns/rows/rowCount）、explanation（AI结论）、schema_name、db、config（ECharts配置，失败时为null）
     """
     t0 = time.time()
     try:
         if not schema_name or not db:
-            return {"error": "缺少 schema_name 或 db 参数，请先调用 list_schemas 和 list_databases 获取"}
+            elapsed = round(time.time() - t0, 1)
+            payload = {"sql": sql, "result": None, "explanation": "", "schema_name": schema_name, "db": db, "config": None}
+            return build_response(tool="generate_echarts_from_sql", question=question, success=False, elapsed_seconds=elapsed, error="缺少 schema_name 或 db 参数，请先调用 list_schemas 和 list_databases 获取", data=payload)
         parsed = _run_sql(sql, schema_name=schema_name, db=db)
         if "error" in parsed:
             logger.error(f"failed to get sql output {str(parsed)}")
-            return parsed
+            explanation = await _safe_explain(question, sql, parsed["error"])
+            elapsed = round(time.time() - t0, 1)
+            payload = {"sql": sql, "result": None, "explanation": explanation, "schema_name": schema_name, "db": db, "config": None}
+            return build_response(tool="generate_echarts_from_sql", question=question, success=False, elapsed_seconds=elapsed, error=parsed["error"], data=payload)
         if ctx is not None:
             await _set_ctx_state(ctx, {"sql": sql, "result": parsed, "schema_name": schema_name, "db": db})
         config = await generate_chart(question, parsed, chart_type, title)
+        total_count = parsed.get("rowCount", 0)
+        if total_count > MAX_RETURN_ROWS:
+            parsed["rows"] = parsed["rows"][:MAX_RETURN_ROWS]
+            parsed["rowCount"] = MAX_RETURN_ROWS
+            parsed["truncated"] = True
+            parsed["totalRowCount"] = total_count
+        else:
+            parsed["truncated"] = False
+            parsed["totalRowCount"] = total_count
         elapsed = round(time.time() - t0, 1)
         if "error" in config:
             logger.error(f"failed to produce chart config {str(config)}")
-            return build_response(tool="generate_echarts_from_sql", question=question, success=False, elapsed_seconds=elapsed, error=config['error'])
-        return build_response(tool="generate_echarts_from_sql", question=question, elapsed_seconds=elapsed, data=config)
+            explanation = await _safe_explain(question, sql, config['error'])
+            payload = {"sql": sql, "result": parsed, "explanation": explanation, "schema_name": schema_name, "db": db, "config": None}
+            return build_response(tool="generate_echarts_from_sql", question=question, success=False, elapsed_seconds=elapsed, error=config['error'], data=payload)
+        row_count = parsed.get("rowCount", 0)
+        col_count = len(parsed.get("columns", []))
+        result_summary = f"返回 {row_count} 行, {col_count} 列"
+        if row_count > 0:
+            sample = parsed["rows"][:3]
+            result_summary += f"\n前3行: {json.dumps(sample, ensure_ascii=False, default=str)}"
+        explanation = await _safe_explain(question, sql, result_summary)
+        payload = {"sql": sql, "result": parsed, "explanation": explanation, "schema_name": schema_name, "db": db, "config": config}
+        return build_response(tool="generate_echarts_from_sql", question=question, elapsed_seconds=elapsed, data=payload)
     except Exception as e:
         logger.error(e)
         elapsed = round(time.time() - t0, 1)
-        return build_response(tool="generate_echarts_from_sql", question=question, success=False, elapsed_seconds=elapsed, error=str(e))
+        payload = {"sql": sql, "result": None, "explanation": "", "schema_name": schema_name, "db": db, "config": None}
+        return build_response(tool="generate_echarts_from_sql", question=question, success=False, elapsed_seconds=elapsed, error=str(e), data=payload)
 
 
 @mcp.tool()

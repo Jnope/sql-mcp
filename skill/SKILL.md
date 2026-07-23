@@ -17,16 +17,15 @@ metadata:
 
 ## 意图 → 工具映射
 
-| 用户意图 | 工具 | 说明 |
-|---------|------|------|
-| 查数据/查表/有哪些表 | `search_tables` | 向量检索相关表结构 |
-| 自然语言查询/跑个SQL | `generate_and_execute_sql` | 生成SQL并执行，返回结果+AI结论 |
-| 基于上次SQL生成图表 | `generate_echarts_from_last` | 重执行上次SQL（去LIMIT）生成ECharts配置 |
-| 指定SQL生成图表 | `generate_echarts_from_sql` | 执行指定SQL并生成ECharts配置 |
-| 获取schema列表 | `list_schemas` | 返回所有可用schema |
-| 获取数据库列表 | `list_databases` | 根据schema创建连接，执行show databases |
-| 数据处理/计算/统计 | `execute_python` | pandas/numpy 加工数据 |
-| 刷新索引/重建向量 | `refresh_vector_index` | 单表或全量刷新 |
+| 用户意图        | 工具 | 说明                            |
+|-------------|------|-------------------------------|
+| 自然语言生成SQL   | `generate_and_execute_sql` | 生成SQL并执行，返回结果和AI结论            |
+| 基于上次SQL生成图表 | `generate_echarts_from_last` | 重执行上次SQL（去LIMIT）生成ECharts配置   |
+| 指定SQL生成图表   | `generate_echarts_from_sql` | 执行指定SQL并生成ECharts配置           |
+| 获取schema列表  | `list_schemas` | 返回所有可用schema                  |
+| 获取数据库列表     | `list_databases` | 根据schema创建连接，执行show databases |
+| 数据处理/计算/统计  | `execute_python` | pandas/numpy 加工数据             |
+| 刷新索引/重建向量   | `refresh_vector_index` | 单表或全量刷新                       |
 
 模糊表述（如"看看数据"）必须询问确认意图，不得自行选择。
 
@@ -51,5 +50,5 @@ metadata:
 
 ## 数据输出约束
 
-1. `generate_and_execute_sql`,`generate_echarts_from_last`和`generate_echarts_from_sql`返回的 JSON 必须原样透传，禁止二次序列化
-2. 错误时返回的 `{"error": "原因说明"}`，需将原因展示给用户
+1. `generate_and_execute_sql`,`generate_echarts_from_last`和`generate_echarts_from_sql` 调用结束后，向用户反馈分析结束即可，**无须输出或解析对应结果**
+2. 错误时结果结果中包含 `error` 属性值，需将原因展示给用户
