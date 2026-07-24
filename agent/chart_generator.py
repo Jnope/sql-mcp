@@ -16,7 +16,8 @@ generate_echarts_option 工具参数说明:
 - title: 图表标题，根据数据内容智能生成
 - chart_type: line/bar/pie/scatter/heatmap/candlestick/mixed
 - 简单单系列场景: 用 x 和 y 指定列名
-- K线图(candlestick): 用 x 指定日期列，series配置open_field/close_field/low_field/high_field
+- x_type: x轴数据类型，'category'=类别型(柱状图、K线图等)，'time'=时间序列(折线图等)。留空默认为category
+- K线图(candlestick): 用 x 指定日期列，series配置open_field/close_field/low_field/high_field。K线图的x_type设为category，数据必须为数值数组[open,close,low,high]
 - 多系列/混合图表场景: 用 series 数组，每个系列独立配置 x_field/y_field/type/y_axis_index/stack
 - group_field: 按某列值自动分组生成多系列
 - y_axes: 双Y轴配置，当不同系列量纲差异大时使用
@@ -197,6 +198,7 @@ def _resolve_series(fields: NewChartFields, df: pd.DataFrame) -> list[dict]:
             {
                 "name": sc.name,
                 "type": sc.type.value if hasattr(sc.type, "value") else str(sc.type),
+                "x_type": sc.x_type or fields.x_type or "category",
                 "x_field": sc.x_field or fields.x or "",
                 "y_field": sc.y_field or fields.y or "",
                 "open_field": sc.open_field,
@@ -242,20 +244,20 @@ def _build_line_bar(fields: NewChartFields, df: pd.DataFrame, title: str) -> dic
     x_col = series_configs[0]["x_field"] or df.columns[0]
 
     x_raw = _safe_list(df[x_col])
-    x_is_category = _is_category_type(x_raw)
 
     series = []
     for sc in series_configs:
         s = {"name": sc["name"], "type": sc["type"]}
+        sc_x_is_category = (sc.get("x_type") or fields.x_type or "category") == "category"
         if fields.group_field:
             mask = df[fields.group_field].astype(str) == sc["name"]
             sub_df = df[mask]
-            if x_is_category:
+            if sc_x_is_category:
                 s["data"] = _safe_list(sub_df[sc["y_field"]])
             else:
                 s["data"] = sub_df[[sc["x_field"], sc["y_field"]]].values.tolist()
         else:
-            if x_is_category:
+            if sc_x_is_category:
                 s["data"] = _safe_list(df[sc["y_field"]])
             else:
                 s["data"] = df[[sc["x_field"], sc["y_field"]]].values.tolist()
@@ -273,6 +275,7 @@ def _build_line_bar(fields: NewChartFields, df: pd.DataFrame, title: str) -> dic
     else:
         y_axis = {"type": "value"}
 
+    x_is_category = (series_configs[0].get("x_type") or fields.x_type or "category") == "category"
     result = {
         "title": {"text": title or fields.title or ""},
         "tooltip": {"trigger": "axis"},
@@ -300,20 +303,21 @@ def _build_candlestick(fields: NewChartFields, df: pd.DataFrame, title: str) -> 
     if missing:
         return {"error": f"K线图列名 {missing} 不在数据列 {list(df.columns)} 中"}
 
-    x_raw = _safe_list(df[x_col])
-    x_is_category = _is_category_type(x_raw)
+    x_raw = [str(v) for v in _safe_list(df[x_col])]
+    x_is_category = (sc.get("x_type") or fields.x_type or "category") == "category"
 
-    if x_is_category:
-        data = df[[open_c, close_c, low_c, high_c]].values.tolist()
-    else:
-        data = df[[x_col, open_c, close_c, low_c, high_c]].values.tolist()
+    data = [
+        [float(row[open_c]), float(row[close_c]), float(row[low_c]), float(row[high_c])]
+        for _, row in df.iterrows()
+    ]
 
     result = {
         "title": {"text": title or fields.title or ""},
         "tooltip": {"trigger": "axis"},
         "legend": {},
         "xAxis": {"type": "category" if x_is_category else "time", "name": x_col},
-        "yAxis": {"type": "value",
+        "yAxis": {
+            "type": "value",
             "scale": True,
             "splitArea": {
                 "show": True
@@ -428,22 +432,6 @@ def _build_heatmap(fields: NewChartFields, df: pd.DataFrame, title: str) -> dict
             }
         ],
     }
-
-
-def _is_category_type(values: list) -> bool:
-    from datetime import datetime
-    for v in values[:100]:
-        if v is None:
-            continue
-        if isinstance(v, (int, float)):
-            return False
-        if isinstance(v, str):
-            try:
-                datetime.fromisoformat(v)
-                return False
-            except (ValueError, TypeError):
-                pass
-    return True
 
 
 def _deep_merge(base: dict, override: dict) -> dict:

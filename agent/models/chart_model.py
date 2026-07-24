@@ -32,6 +32,10 @@ class SeriesConfig(BaseModel):
     type: SeriesType = Field(
         description="该系列的图表类型。可与chart_type不同以实现混合图表，如折线+柱状图组合"
     )
+    x_type: str = Field(
+        default="category",
+        description="该系列x轴数据类型。'category'=类别型(柱状图等)，'time'=时间序列(k线图等)。留空默认为category"
+    )
     x_field: str = Field(
         description="该系列x轴使用的列名。必须使用数据中的实际列名，不能翻译。如'日期'、'月份'、'时间'"
     )
@@ -104,6 +108,10 @@ class NewChartFields(BaseModel):
     )
     chart_type: ChartType = Field(
         description="图表整体类型。判断依据：时间趋势→line，类别对比→bar，占比分析→pie，相关性→scatter，热力分布→heatmap，多种图表叠加→mixed"
+    )
+    x_type: str = Field(
+        default="category",
+        description="x轴数据类型。'category'=类别型(柱状图等)，'time'=时间序列(k线图等)。留空默认为category"
     )
 
     # 简单模式（单系列）
